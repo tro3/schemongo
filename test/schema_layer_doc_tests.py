@@ -3,13 +3,13 @@ from unittest import TestCase
 import datetime
 
 import mongomock
-from schemongo.schema_layer.schema_doc import SchemaLayerDoc, SchemaLayerList, \
+from schemongo.schema_layer.schema_doc import SchemaDoc, SchemaList, \
     enforce_schema, generate_prototype, run_auto_funcs, enforce_ids, merge
 
 from pprint import pprint as p
 
 
-class SchemaLayerDocTests(TestCase):
+class SchemaDocTests(TestCase):
     
     def test_type_propagation(self):
         schema = {
@@ -23,7 +23,7 @@ class SchemaLayerDocTests(TestCase):
                 "name": {"type":"string"}
             }}},            
         }
-        data = SchemaLayerDoc(schema, {
+        data = SchemaDoc(schema, {
             "name":"bob",
             "subdoc": {
                 "data": 1
@@ -40,17 +40,17 @@ class SchemaLayerDocTests(TestCase):
         
         self.assertIsInstance(data.name, str)
         self.assertIsInstance(data['name'], str)
-        self.assertIsInstance(data.subdoc, SchemaLayerDoc)
-        self.assertIsInstance(data['subdoc'], SchemaLayerDoc)
+        self.assertIsInstance(data.subdoc, SchemaDoc)
+        self.assertIsInstance(data['subdoc'], SchemaDoc)
         self.assertIsInstance(data.hash, dict)
         self.assertIsInstance(data['hash'], dict)
         self.assertIsInstance(data['hash']['data'], int)
         self.assertIsInstance(data.num_list, list)
         self.assertIsInstance(data['num_list'], list)
-        self.assertIsInstance(data.doclist, SchemaLayerList)
-        self.assertIsInstance(data['doclist'], SchemaLayerList)
-        self.assertIsInstance(data.doclist[0], SchemaLayerDoc)
-        self.assertIsInstance(data['doclist'][0], SchemaLayerDoc)
+        self.assertIsInstance(data.doclist, SchemaList)
+        self.assertIsInstance(data['doclist'], SchemaList)
+        self.assertIsInstance(data.doclist[0], SchemaDoc)
+        self.assertIsInstance(data['doclist'][0], SchemaDoc)
 
 
     def test_enforce_schema(self):
@@ -138,7 +138,7 @@ class SchemaLayerDocTests(TestCase):
                 "title": {"type":"string", "auto_init": lambda elem: elem.parent.parent.name.upper()}
             }}},            
         }
-        data = SchemaLayerDoc(schema, {
+        data = SchemaDoc(schema, {
             "name":"bob",
             "key":"fred",
             "subdoc": {
@@ -189,7 +189,7 @@ class SchemaLayerDocTests(TestCase):
                 "title": {"type":"string", "auto_init": lambda elem: elem.root().name.upper()}
             }}},            
         }
-        data = SchemaLayerDoc(schema, {
+        data = SchemaDoc(schema, {
             "name":"fred",
             "key":"FRED",
             "hash": {

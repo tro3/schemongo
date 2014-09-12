@@ -49,7 +49,7 @@ def is_read_only(val):
 
 
 
-class SchemaLayerDoc(dict):
+class SchemaDoc(dict):
     def __init__(self, schema, raw, parent=None, projection=None):
         dict.__init__(self)
         self.parent = parent
@@ -64,13 +64,15 @@ class SchemaLayerDoc(dict):
         for key, val in self._schema.items():
             if key in raw:
                 if is_object(val):
-                    self[key] = SchemaLayerDoc(val['schema'], raw[key], self, None)
+                    self[key] = SchemaDoc(val['schema'], raw[key], self, None)
                 elif is_list_of_objects(val):
-                    self[key] = SchemaLayerList(val['schema']['schema'], raw[key], self)
+                    self[key] = SchemaList(val['schema']['schema'], raw[key], self)
                 else:
                     self[key] = raw[key]
 
     def __getattr__(self, key):
+        if key not in self:
+            raise AttributeError, key
         return self[key]
     
     def root(self):
@@ -82,14 +84,14 @@ class SchemaLayerDoc(dict):
             
 
             
-class SchemaLayerList(list):
+class SchemaList(list):
     def __init__(self, schema, raw, parent=None):
         list.__init__(self)
         self._schema = schema
         self.parent = parent
 
         for i, val in enumerate(raw):
-            self.append(SchemaLayerDoc(self._schema, val, self))
+            self.append(SchemaDoc(self._schema, val, self))
 
 
 
@@ -161,6 +163,8 @@ def generate_prototype(schema):
     for key in schema.keys():
         if is_object(schema[key]):
             result[key] = generate_prototype(schema[key]['schema'])
+        elif is_list_of_objects(schema[key]):
+            result[key] = SchemaList(schema[key]['schema']['schema'], [], result)
         elif 'default' in schema[key]:
             result[key] = schema[key]['default']
         elif schema[key]['type'] == 'dict':
@@ -169,12 +173,12 @@ def generate_prototype(schema):
             result[key] = []
         else:
             result[key] = None
-    return result
+    return SchemaDoc(schema, result)
     
 
 def run_auto_funcs(data):
-    "'data' must be SchemaLayerDoc"
-    if not isinstance(data, SchemaLayerDoc): import pdb; pdb.set_trace()
+    "'data' must be SchemaDoc"
+    if not isinstance(data, SchemaDoc): import pdb; pdb.set_trace()
     schema = data._schema
     for key in schema.keys():
         if is_object(schema[key]):
@@ -196,20 +200,20 @@ def merge(schema, original, new):
             elif is_list_of_objects(schema[key]) and len(val):
                 old = original[key]
                 ids = [x['_id'] for x in old]
-                original[key] = SchemaLayerList(schema[key], [], original[key].parent)
+                original[key] = SchemaList(schema[key], [], original[key].parent)
                 for doc in val:
                     if '_id' in doc and doc['_id'] in ids:
                         new = old[ids.index(doc['_id'])]
                         merge(schema[key]['schema']['schema'], new, doc)
                         original[key].append(new)
                     else:
-                        original[key].append(SchemaLayerDoc(schema[key]['schema']['schema'], doc, original[key]))
+                        original[key].append(SchemaDoc(schema[key]['schema']['schema'], doc, original[key]))
             else:
                 original[key] = val
         else:
             if is_object(schema[key]):
-                original[key] = SchemaLayerDoc(schema[key]['schema'], val, original)
+                original[key] = SchemaDoc(schema[key]['schema'], val, original)
             elif is_list_of_objects(schema[key]) and len(val):
-                original[key] = SchemaLayerList(schema[key]['schema']['schema'], val, original)
+                original[key] = SchemaList(schema[key]['schema']['schema'], val, original)
             else:
                 original[key] = val
