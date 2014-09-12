@@ -27,7 +27,7 @@ class DBLayerTests(TestCase):
             ]
         })
                 
-        inst = self.db.collection.find_one(1)
+        inst = self.db.collection.find_one({})
         self.assertEqual(inst, {
             "_id": 1,
             "name":"bob",

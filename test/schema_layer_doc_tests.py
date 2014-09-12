@@ -186,7 +186,7 @@ class SchemaDocTests(TestCase):
             "num_list": {"type": "list", "schema": {"type": "integer"}},
             "doclist": {"type": "list", "schema": {"type": "dict", "schema": {
                 "name": {"type":"string"},
-                "title": {"type":"string", "auto_init": lambda elem: elem.root().name.upper()}
+                "title": {"type":"string", "auto_init": lambda elem: elem.get_root().name.upper()}
             }}},            
         }
         data = SchemaDoc(schema, {
