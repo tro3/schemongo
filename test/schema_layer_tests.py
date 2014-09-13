@@ -113,7 +113,8 @@ class SchemaLayerTests(TestCase):
             "hash": {"type": "dict"},
             "num_list": {"type": "list", "schema": {"type": "integer"}},
             "doclist": {"type": "list", "schema": {"type": "dict", "schema": {
-                "name": {"type":"string", "auto_init": lambda elem: elem.get_root().name.upper()}
+                "name": {"type":"string", "auto_init": lambda elem: elem.get_root().name.upper()},
+                "edit": {"type":"integer", "auto": lambda elem: (elem.edit or 0) + 1},
             }}},            
         })
 
@@ -139,7 +140,7 @@ class SchemaLayerTests(TestCase):
             },
             "hash": {"_id": 1, 4:5},
             "num_list": [4,5],
-            "doclist": [{"_id": 1, "name": "BOB"}]
+            "doclist": [{"_id": 1, "name": "BOB", "edit": 1}]
         })
         
         data = {
@@ -149,7 +150,7 @@ class SchemaLayerTests(TestCase):
                 "_id": 1,
                 "data": 2
             },
-            "doclist": [{"_id": 1, "name": "Fred"}]
+            "doclist": [{"_id": 1, "name": "Fred", "edit": 10}]
         }
         errs = self.db.test.update(data)
         self.assertIsNone(errs)
@@ -164,6 +165,6 @@ class SchemaLayerTests(TestCase):
             },
             "hash": {"_id": 1, 4:5},
             "num_list": [4,5],
-            "doclist": [{"_id": 1, "name": "BOB"}]
+            "doclist": [{"_id": 1, "name": "BOB", "edit": 2}]
         })
         

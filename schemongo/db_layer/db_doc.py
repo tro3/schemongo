@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import copy
+
 class DBDoc(dict):
     def __init__(self, raw, parent=None, projection=None):
         dict.__init__(self, raw)
@@ -14,8 +16,12 @@ class DBDoc(dict):
         
     def __getattr__(self, key):
         if key not in self:
-            raise AttributeError, key
+            return None
         return self[key]
+    
+    def __deepcopy__(self, memo):
+        tmp = dict(self)
+        return DBDoc(tmp, self._parent, self._projection)
     
     def get_parent(self):
         return self._parent
