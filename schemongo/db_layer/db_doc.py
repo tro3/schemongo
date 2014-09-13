@@ -52,7 +52,7 @@ def enforce_ids(item, _id):
     if isinstance(item, dict):
         for val in item.values():
             enforce_ids(val, 1)
-        if '_id' not in item:
+        if '_id' not in item or not item['_id']:
             item['_id'] = _id
             return _id + 1
     elif isinstance(item, list):

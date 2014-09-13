@@ -1,17 +1,33 @@
 #!/usr/bin/env python
 
 from ..db_layer import database
-from schema_doc import enforce_schema, merge, run_auto_funcs, generate_prototype
+from ..db_layer.db_doc import DBDoc
+from schema_doc import enforce_schema, merge, run_auto_funcs, generate_prototype, is_object, is_list_of_objects
+
+from pprint import pprint as p
 
 
 class SchemaDatabaseWrapper(database.DatabaseWrapper):
     def __init__(self, *args, **kwords):
         super(SchemaDatabaseWrapper, self).__init__(*args, **kwords)
         self.schemas = {}
+        
+    def register_schema(self, key, schema):
+        self._add_id_recursive(schema)
+        self.schemas[key] = schema
+        
+    def _add_id_recursive(self, schema):
+        schema.update({'_id':{'type':'integer'}})
+        for key, val in schema.items():
+            if is_object(val):
+                self._add_id_recursive(schema[key]['schema'])
+            elif is_list_of_objects(val):
+                self._add_id_recursive(schema[key]['schema']['schema'])
     
     def __getattr__(self, key):
         return SchemaCollectionWrapper(self.schemas[key], self._db[key], self)
         
+
 
 class SchemaCollectionWrapper(object):
     def __init__(self, schema, collection, db):
@@ -19,10 +35,10 @@ class SchemaCollectionWrapper(object):
         self.coll = database.CollectionWrapper(collection, db)
 
     def find(self, spec=None, fields=None, skip=0, limit=0, sort=None):
-        return SchemaCursorWrapper(self.coll(spec, fields, skip, limit, sort))  
+        return self.coll.find(spec, fields, skip, limit, sort) 
 
     def find_one(self, spec_or_id, fields=None, skip=0, sort=None):
-        return SchemaDoc(self.schema, self.coll.find_one(spec_or_id, fields, skip, sort))
+        return self.coll.find_one(spec_or_id, fields, skip, sort)
     
     def insert(self, doc_or_docs, username=None):
         if not isinstance(doc_or_docs, list):
@@ -34,10 +50,10 @@ class SchemaCollectionWrapper(object):
         for incoming in docs:
             data = generate_prototype(self.schema)
             enforce_schema(self.schema, incoming)
-            merge(self.schema, data, incoming)
-            run_auto_funcs(data)
+            merge(data, incoming)
+            run_auto_funcs(self.schema, data)
             datas.append(data)
-            
+        
         self.coll.insert(datas, username)
 
     def update(self, incoming, username=None):
@@ -45,8 +61,8 @@ class SchemaCollectionWrapper(object):
 
         data = self.find_one({"_id":incoming["_id"]})
         enforce_schema(self.schema, incoming)
-        merge(self.schema, data, incoming)
-        run_auto_funcs(data)
+        merge(data, incoming)
+        run_auto_funcs(self.schema, data)
             
         self.coll.update(data, username)
 
@@ -57,7 +73,7 @@ class CursorWrapper(object):
         self.cursor = cursor
             
     def __getitem__(self, index):
-        return SchemaDoc(self.schema, self.cursor[index])
+        return DBDoc(self.cursor[index])
         
     def count(self):
         return self.cursor.count()
