@@ -40,7 +40,7 @@ class SchemaCollectionWrapper(object):
     def find_one(self, spec_or_id, fields=None, skip=0, sort=None):
         return self.coll.find_one(spec_or_id, fields, skip, sort)
     
-    def insert(self, doc_or_docs, username=None):
+    def insert(self, doc_or_docs, username=None, direct=False):
         if not isinstance(doc_or_docs, list):
             docs = [doc_or_docs]
         else:
@@ -49,20 +49,24 @@ class SchemaCollectionWrapper(object):
         datas = []
         for incoming in docs:
             data = generate_prototype(self.schema)
-            errs = enforce_datatypes(self.schema, incoming)
-            if errs:
-                return errs
+            if not direct:
+                errs = enforce_datatypes(self.schema, incoming)
+                if errs:
+                    return errs
             merge(data, incoming)
             run_auto_funcs(self.schema, data)
             datas.append(data)
         
         self.coll.insert(datas, username)
 
-    def update(self, incoming, username=None):
+    def update(self, incoming, username=None, direct=False):
         assert '_id' in incoming, "Cannot update document without _id attribute"
 
         data = self.find_one({"_id":incoming["_id"]})
-        enforce_datatypes(self.schema, incoming)
+        if not direct:
+            errs = enforce_datatypes(self.schema, incoming)
+            if errs:
+                return errs
         merge(data, incoming)
         run_auto_funcs(self.schema, data)
             
