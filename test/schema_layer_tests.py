@@ -37,7 +37,8 @@ class SchemaLayerTests(TestCase):
             "num_list": [4,5],
             "doclist": [{"name": "Fred"}]
         }
-        self.db.test.insert(data)
+        errs = self.db.test.insert(data)
+        self.assertIsNone(errs)
         
         data = self.db.test.find_one({"name":"Bob"})
         self.assertEqual(type(data), DBDoc)
@@ -53,7 +54,8 @@ class SchemaLayerTests(TestCase):
             "doclist": [{"_id": 1, "name": "Fred"}]
         })
 
-        self.db.test.update({"_id":1, "name":"Bob2"})
+        errs = self.db.test.update({"_id":1, "name":"Bob2"})
+        self.assertIsNone(errs)
         data = self.db.test.find_one({"_id":1})
         self.assertEqual(type(data), DBDoc)
         self.assertEqual(data, {
@@ -69,3 +71,15 @@ class SchemaLayerTests(TestCase):
         })
 
     
+    def test_schema_errors(self):
+        data = {
+            "name": "Bob",
+            "subdoc": {
+                "data": "fred"
+            },
+            "hash": {4:5},
+            "num_list": [4,5],
+            "doclist": [{"name": "Fred"}]
+        }
+        errs = self.db.test.insert(data)
+        self.assertEqual(errs, ["subdoc/data: Could not convert 'fred' to type 'integer'"])

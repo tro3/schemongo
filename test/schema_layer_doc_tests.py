@@ -4,7 +4,7 @@ import datetime
 
 import mongomock
 from schemongo.schema_layer.schema_doc import DBDoc, DBDocList, \
-    enforce_schema, generate_prototype, run_auto_funcs, enforce_ids, merge
+    enforce_datatypes, generate_prototype, run_auto_funcs, enforce_ids, merge
 
 from pprint import pprint as p
 
@@ -83,7 +83,7 @@ class DBDocTests(TestCase):
                 {"name": "george"},
             ]
         }        
-        enforce_schema(schema, data)
+        enforce_datatypes(schema, data)
         
         self.assertIsInstance(data['name'], str)
         self.assertFalse('name2' in data)
@@ -215,7 +215,7 @@ class DBDocTests(TestCase):
                 {"name": "amber"},
             ]            
         }
-        enforce_schema(schema, incoming)
+        enforce_datatypes(schema, incoming)
         merge(data, incoming)
         run_auto_funcs(schema, data)
         enforce_ids(data, 10)

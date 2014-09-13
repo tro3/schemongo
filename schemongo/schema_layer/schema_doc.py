@@ -97,20 +97,27 @@ def _convert_value(schema, value):
         raise TypeError, "Could not convert '%s' to type '%s'" % (value, _type)
 
 
-def enforce_schema(schema, data):
+def enforce_datatypes(schema, data, path=''):
     """
     Note schema metadata (e.g. type) owned my parent
     data is primitive dict, intended at incoming data
     """
+    errs = []
     for key in data.keys():
+        path = path and (path + '/')
         if key not in schema or is_read_only(schema[key]):
             data.pop(key)
         elif is_object(schema[key]):
-            enforce_schema(schema[key]['schema'], data[key])
+            errs.extend(enforce_datatypes(schema[key]['schema'], data[key], path + key))
         elif is_list_of_objects(schema[key]):
-            map(lambda x: enforce_schema(schema[key]['schema']['schema'], x), data[key])
+            for i, item in enumerate(data[key]):
+                errs.extend(enforce_datatypes(schema[key]['schema']['schema'], item, path + '%s/%s' % (key, i)))
         else:
-            data[key] = _convert_value(schema[key], data[key])
+            try:
+                data[key] = _convert_value(schema[key], data[key])
+            except Exception, e:
+                errs.append('%s%s: %s' % (path, key, e.message))
+    return errs
 
         
 def generate_prototype(schema):

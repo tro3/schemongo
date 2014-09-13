@@ -2,7 +2,7 @@
 
 from ..db_layer import database
 from ..db_layer.db_doc import DBDoc
-from schema_doc import enforce_schema, merge, run_auto_funcs, generate_prototype, is_object, is_list_of_objects
+from schema_doc import enforce_datatypes, merge, run_auto_funcs, generate_prototype, is_object, is_list_of_objects
 
 from pprint import pprint as p
 
@@ -49,7 +49,9 @@ class SchemaCollectionWrapper(object):
         datas = []
         for incoming in docs:
             data = generate_prototype(self.schema)
-            enforce_schema(self.schema, incoming)
+            errs = enforce_datatypes(self.schema, incoming)
+            if errs:
+                return errs
             merge(data, incoming)
             run_auto_funcs(self.schema, data)
             datas.append(data)
@@ -60,7 +62,7 @@ class SchemaCollectionWrapper(object):
         assert '_id' in incoming, "Cannot update document without _id attribute"
 
         data = self.find_one({"_id":incoming["_id"]})
-        enforce_schema(self.schema, incoming)
+        enforce_datatypes(self.schema, incoming)
         merge(data, incoming)
         run_auto_funcs(self.schema, data)
             
