@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from ..db_layer.db_doc import DBLayerDoc, enforce_ids
+from ..db_layer.db_doc import DBDoc, enforce_ids
 
 """
 data types                      on_write                            on_serialize
@@ -57,7 +57,7 @@ class SchemaDoc(dict):
         self._schema = schema
         self._schema.update({'_id': {'type':'integer'}})
 
-        if not projection and isinstance(raw, DBLayerDoc):
+        if not projection and isinstance(raw, DBDoc):
             projection = raw._projection
         self._projection = projection
         
@@ -75,7 +75,7 @@ class SchemaDoc(dict):
             raise AttributeError, key
         return self[key]
     
-    def root(self):
+    def get_root(self):
         current = self
         while current.parent:
             current = current.parent
@@ -173,7 +173,7 @@ def generate_prototype(schema):
             result[key] = []
         else:
             result[key] = None
-    return SchemaDoc(schema, result)
+    return SchemaDoc( schema, result)
     
 
 def run_auto_funcs(data):

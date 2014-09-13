@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from copy import deepcopy
-from db_doc import DBLayerDoc, enforce_ids, merge
+from db_doc import DBDoc, enforce_ids, merge
 from diff import diff_recursive
 
 
@@ -43,14 +43,14 @@ class CollectionWrapper(object):
             skip = skip,
             sort = sort
         )
-        return DBLayerDoc(raw, proj)
+        return DBDoc(raw, None, proj)
         
 
     def insert(self, doc_or_docs, username=None):
         if not isinstance(doc_or_docs, list):
             if isinstance(doc_or_docs, dict):
-                docs = [DBLayerDoc(doc_or_docs)]
-            elif isinstance(doc_or_docs, DBLayerDoc):
+                docs = [DBDoc(doc_or_docs)]
+            elif isinstance(doc_or_docs, DBDoc):
                 docs = [doc_or_docs]
             else:
                 raise TypeError, item
@@ -58,8 +58,8 @@ class CollectionWrapper(object):
             docs = []
             for item in doc_or_docs:
                 if isinstance(item, dict):
-                    docs.append(DBLayerDoc(item))
-                elif isinstance(item, DBLayerDoc):
+                    docs.append(DBDoc(item))
+                elif isinstance(item, DBDoc):
                     docs.append(item)
                 else:
                     raise TypeError, item
@@ -134,7 +134,7 @@ class CursorWrapper(object):
         self._projected_cursor = projected_cursor
             
     def __getitem__(self, index):
-        return DBLayerDoc(self._raw_cursor[index], self._projected_cursor and self._projected_cursor[index])
+        return DBDoc(self._raw_cursor[index], None, self._projected_cursor and self._projected_cursor[index])
         
     def count(self):
         return self._raw_cursor.count()
