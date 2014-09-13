@@ -1,6 +1,6 @@
 
 from database import SchemaDatabaseWrapper
-from schema_doc import SchemaDoc
+#from schema_doc import SchemaDoc
 
 db = None
 

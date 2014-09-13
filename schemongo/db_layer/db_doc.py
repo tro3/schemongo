@@ -36,6 +36,16 @@ class DBDocList(list):
         for item in raw:
             self.append(DBDoc(item, self))
 
+    def get_parent(self):
+        return self._parent
+    
+    def get_root(self):
+        current = self
+        while current._parent:
+            current = current._parent
+        return current
+
+
 
         
 def enforce_ids(item, _id):
@@ -69,23 +79,10 @@ def merge(original, new):
                 if '_id' in doc and doc['_id'] in ids:
                     new = old[ids.index(doc['_id'])]
                     merge(new, doc)
-                    original[key].append(new)
+                    original[key].append(DBDoc(new, original[key]))
                 else:
-                    original[key].append(doc)
+                    original[key].append(DBDoc(doc, original[key]))
         else:
             original[key] = val
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

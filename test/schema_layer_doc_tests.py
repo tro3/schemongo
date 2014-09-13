@@ -3,16 +3,17 @@ from unittest import TestCase
 import datetime
 
 import mongomock
-from schemongo.schema_layer.schema_doc import SchemaDoc, SchemaList, \
+from schemongo.schema_layer.schema_doc import DBDoc, DBDocList, \
     enforce_schema, generate_prototype, run_auto_funcs, enforce_ids, merge
 
 from pprint import pprint as p
 
 
-class SchemaDocTests(TestCase):
+class DBDocTests(TestCase):
     
     def test_type_propagation(self):
         schema = {
+            "_id": {"type": "integer"},
             "name": {"type": "string"},
             "subdoc": {"type": "dict", "schema": {
                 "data": {"type":"integer"}
@@ -23,7 +24,7 @@ class SchemaDocTests(TestCase):
                 "name": {"type":"string"}
             }}},            
         }
-        data = SchemaDoc(schema, {
+        data = DBDoc({
             "name":"bob",
             "subdoc": {
                 "data": 1
@@ -40,21 +41,22 @@ class SchemaDocTests(TestCase):
         
         self.assertIsInstance(data.name, str)
         self.assertIsInstance(data['name'], str)
-        self.assertIsInstance(data.subdoc, SchemaDoc)
-        self.assertIsInstance(data['subdoc'], SchemaDoc)
-        self.assertIsInstance(data.hash, dict)
-        self.assertIsInstance(data['hash'], dict)
+        self.assertIsInstance(data.subdoc, DBDoc)
+        self.assertIsInstance(data['subdoc'], DBDoc)
+        self.assertIsInstance(data.hash, DBDoc)
+        self.assertIsInstance(data['hash'], DBDoc)
         self.assertIsInstance(data['hash']['data'], int)
         self.assertIsInstance(data.num_list, list)
         self.assertIsInstance(data['num_list'], list)
-        self.assertIsInstance(data.doclist, SchemaList)
-        self.assertIsInstance(data['doclist'], SchemaList)
-        self.assertIsInstance(data.doclist[0], SchemaDoc)
-        self.assertIsInstance(data['doclist'][0], SchemaDoc)
+        self.assertIsInstance(data.doclist, DBDocList)
+        self.assertIsInstance(data['doclist'], DBDocList)
+        self.assertIsInstance(data.doclist[0], DBDoc)
+        self.assertIsInstance(data['doclist'][0], DBDoc)
 
 
     def test_enforce_schema(self):
         schema = {
+            "_id": {"type": "integer"},
             "name": {"type": "string"},
             "key": {"type": "string", "read_only": True},
             "subdoc": {"type": "dict", "schema": {
@@ -110,7 +112,7 @@ class SchemaDocTests(TestCase):
             }}},            
         }
         inst = generate_prototype(schema)
-        self.assertEqual(inst, {
+        self.assertEqual(inst, {            
             "name":None,
             "key": None,
             "key2": "Fred",
@@ -125,6 +127,7 @@ class SchemaDocTests(TestCase):
 
     def test_auto(self):
         schema = {
+            "_id": {"type": "integer"},
             "name": {"type": "string"},
             "key": {"type": "string", "auto": lambda elem: elem.name.upper()},
             "key2": {"type": "string", "auto": lambda elem: elem.name.upper()},
@@ -135,10 +138,10 @@ class SchemaDocTests(TestCase):
             "num_list": {"type": "list", "schema": {"type": "integer"}},
             "doclist": {"type": "list", "schema": {"type": "dict", "schema": {
                 "name": {"type":"string"},
-                "title": {"type":"string", "auto_init": lambda elem: elem.parent.parent.name.upper()}
+                "title": {"type":"string", "auto_init": lambda elem: elem.get_parent().get_parent().name.upper()}
             }}},            
         }
-        data = SchemaDoc(schema, {
+        data = DBDoc({
             "name":"bob",
             "key":"fred",
             "subdoc": {
@@ -154,7 +157,7 @@ class SchemaDocTests(TestCase):
             ]
         })
         
-        run_auto_funcs(data)
+        run_auto_funcs(schema, data)
     
         self.assertEqual(data, {
             "name":"bob",
@@ -176,6 +179,7 @@ class SchemaDocTests(TestCase):
 
     def test_write_flow(self):
         schema = {
+            "_id": {"type": "integer"},
             "name": {"type": "string"},
             "key": {"type": "string", "auto": lambda elem: elem.name.upper()},
             "key2": {"type": "string", "auto": lambda elem: elem.name.upper()},
@@ -185,11 +189,12 @@ class SchemaDocTests(TestCase):
             "hash": {"type": "dict"},
             "num_list": {"type": "list", "schema": {"type": "integer"}},
             "doclist": {"type": "list", "schema": {"type": "dict", "schema": {
+                "_id": {"type": "integer"},
                 "name": {"type":"string"},
                 "title": {"type":"string", "auto_init": lambda elem: elem.get_root().name.upper()}
             }}},            
         }
-        data = SchemaDoc(schema, {
+        data = DBDoc({
             "name":"fred",
             "key":"FRED",
             "hash": {
@@ -211,8 +216,8 @@ class SchemaDocTests(TestCase):
             ]            
         }
         enforce_schema(schema, incoming)
-        merge(schema, data, incoming)
-        run_auto_funcs(data)
+        merge(data, incoming)
+        run_auto_funcs(schema, data)
         enforce_ids(data, 10)
         
         self.assertEqual(data, {

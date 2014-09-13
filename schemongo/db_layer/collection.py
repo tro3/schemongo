@@ -88,7 +88,7 @@ class CollectionWrapper(object):
 
     def update(self, doc, username=None):
         assert '_id' in doc, "Cannot update document without _id attribute"
-        data = self._collection.find_one(doc['_id'])
+        data = DBDoc(self._collection.find_one(doc['_id']))
         old = deepcopy(data)
         merge(data, doc)
         enforce_ids(data, doc['_id'])

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from ..db_layer import database
-from schema_doc import SchemaDoc, enforce_schema, merge, run_auto_funcs, generate_prototype
+from schema_doc import enforce_schema, merge, run_auto_funcs, generate_prototype
 
 
 class SchemaDatabaseWrapper(database.DatabaseWrapper):
