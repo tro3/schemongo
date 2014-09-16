@@ -119,10 +119,34 @@ def enforce_datatypes(schema, data, path=''):
                 errs.append('%s%s: %s' % (path, key, e.message))
     return errs
 
+
+def enforce_schema_behaviors(schema, data, path=''):
+    errs = []
+    for key in data.keys():
+        path = path and (path + '/')
+        if is_object(schema[key]):
+            errs.extend(enforce_schema_behaviors(schema[key]['schema'], data[key], path + key))
+        elif is_list_of_objects(schema[key]):
+            for i, item in enumerate(data[key]):
+                errs.extend(enforce_schema_behaviors(schema[key]['schema']['schema'], item, path + '%s/%s' % (key, i)))
+        else:
+            if 'allowed' in schema[key] and schema[key]['allowed']:
+                allowed = schema[key]['allowed']
+                if callable(allowed):
+                    allowed = allowed(data)
+                if not hasattr(allowed, '__iter__'):
+                    errs.append('%s%s: %s' % (path, key, "'required' parameter '%s' did not evaluate to an iterable" % allowed))
+                elif data[key] not in allowed:
+                    errs.append('%s%s: %s' % (path, key, "'%s' not one of allowed values" % data[key]))
+                    
+    return errs
+
         
 def generate_prototype(schema):
     result = {}
     for key in schema.keys():
+        if 'serialize' in schema[key]:
+            continue
         if is_object(schema[key]):
             result[key] = generate_prototype(schema[key]['schema'])
         elif is_list_of_objects(schema[key]):
@@ -144,7 +168,7 @@ def run_auto_funcs(schema, data):
             run_auto_funcs(schema[key]['schema'], data[key])
         elif is_list_of_objects(schema[key]):
             [run_auto_funcs(schema[key]['schema']['schema'], x) for x in data[key]]
-        elif 'auto_init' in schema[key] and '_id' not in data:
+        elif 'auto_init' in schema[key] and not data._id:
             if not isinstance(data, DBDoc):
                 import pdb
                 pdb.set_trace()

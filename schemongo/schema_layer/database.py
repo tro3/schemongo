@@ -2,7 +2,8 @@
 
 from ..db_layer import database
 from ..db_layer.db_doc import DBDoc
-from schema_doc import enforce_datatypes, merge, run_auto_funcs, generate_prototype, is_object, is_list_of_objects
+from schema_doc import enforce_datatypes, merge, run_auto_funcs, generate_prototype, \
+                       enforce_schema_behaviors, is_object, is_list_of_objects
 
 from pprint import pprint as p
 
@@ -55,6 +56,10 @@ class SchemaCollectionWrapper(object):
                     return errs
             merge(data, incoming)
             run_auto_funcs(self.schema, data)
+            if not direct:
+                errs = enforce_schema_behaviors(self.schema, data)
+                if errs:
+                    return errs
             datas.append(data)
         
         self.coll.insert(datas, username)
