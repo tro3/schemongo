@@ -356,7 +356,7 @@ class SchemaLayerTests(TestCase):
                 "name": {"type":"string", 'allowed': ['Fred', 'George']},
                 "caps": {"type":"string", 'auto': lambda elem: elem.name.upper()},
                 "init": {"type":"string", 'auto_init': lambda elem: elem.name.lower()},
-                    
+                "really": {'type': 'string', 'serialize': lambda elem: elem.name + ', really'},                    
             }}},            
         })
 
@@ -383,7 +383,21 @@ class SchemaLayerTests(TestCase):
                 "_id": 1,
                 "name": 'Fred',
                 "caps": 'FRED',
-                "init": 'fred'
+                "init": 'fred',
+                "really": 'Fred, really'
             }],
         })
 
+        inst = self.db.test.find_one({'_id':1}, fields=['name', 'subdoc'])
+
+        text = self.db.test.serialize(inst)
+        data = json.loads(text)
+        self.assertEqual(data, {
+            "_id": 1,
+            "name": "Bob",
+            "subdoc": {
+                "_id": 1,
+                "data": 3,
+                "sdata": 4,
+            },
+        })
