@@ -82,7 +82,7 @@ def diff_lists_recursive(new, old, path):
     oldvals = map(simple_val, old)
     newvals = map(simple_val, new)
     matched = []
-    
+
     stack = list(newvals)
     for val in oldvals:
         if val in stack:

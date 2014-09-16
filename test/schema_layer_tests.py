@@ -437,3 +437,39 @@ class SchemaLayerTests(TestCase):
         }
         errs = self.db.test.insert(data)
         self.assertEqual(errs, ["data: Could not convert 'fred' to type 'datetime'"])
+
+
+    def test_bulk_insert(self):
+        self.db.register_schema('test', {
+            "name": {"type": "string"},                
+            "data": {"type": "integer"},
+        })
+
+        data = [
+            {"name": "Bob", "data": '2011'},
+            {"name": "Fred", "data": '2012'},
+        ]
+        errs = self.db.test.insert(data)
+        self.assertIsNone(errs)
+        self.assertEqual(self.db.test.find({}).count(), 2)
+
+
+    def test_direct_update(self):
+        self.db.register_schema('test', {
+            "name": {"type": "string"},                
+            "data": {"type": "integer", "read_only": True},
+        })
+
+        data = [
+            {"name": "Bob", "data": 1},
+            {"name": "Fred", "data": 2},
+        ]
+        errs = self.db.test.insert(data)
+        self.assertIsNone(errs)
+        
+        self.assertEqual(self.db.test.find({'_id':1})[0].data, None)
+        data = {"_id":1, "name": "Bob", "data": 1}
+        errs = self.db.test.update(data, direct=True)
+        self.assertEqual(self.db.test.find({'_id':1})[0].data, 1)
+        
+        

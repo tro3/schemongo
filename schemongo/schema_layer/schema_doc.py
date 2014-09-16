@@ -95,6 +95,7 @@ def _convert_value(schema, value):
                 return tmp
             else:
                 return list(value)
+        raise TypeError, "Improper schema type '%s'" % _type
     except:
         raise TypeError, "Could not convert '%s' to type '%s'" % (value, _type)
 

@@ -173,7 +173,7 @@ class DBLayerTests(TestCase):
 
 
     def test_remove_byspec(self):
-        self.db.collection.insert({
+        self.db.collection.insert(DBDoc({
             "name":"fred",
             "subdoc": {
                 "data": 1
@@ -183,7 +183,7 @@ class DBLayerTests(TestCase):
                 {"name": "fred"},
                 {"name": "george"},
             ]
-        })        
+        }))        
         self.db.collection.insert({
             "name":"bob",
             "subdoc": {

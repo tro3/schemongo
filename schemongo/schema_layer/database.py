@@ -73,29 +73,20 @@ class SchemaCollectionWrapper(object):
             errs = enforce_datatypes(self.schema, incoming)
             if errs:
                 return errs
-        merge(data, incoming)
+        if not direct:
+            merge(data, incoming)
+        else:
+            data = DBDoc(incoming)
         run_auto_funcs(self.schema, data)
         if not direct:
             errs = enforce_schema_behaviors(self.schema, data, self)
             if errs:
                 return errs
             
-        self.coll.update(data, username)
+        self.coll.update(data, username, direct)
 
     def serialize(self, item):
         return serialize(self.schema, item)
     
 
-
-    
-class CursorWrapper(object):
-    def __init__(self, schema, cursor):
-        self.schema = schema
-        self.cursor = cursor
-            
-    def __getitem__(self, index):
-        return DBDoc(self.cursor[index])
-        
-    def count(self):
-        return self.cursor.count()
 

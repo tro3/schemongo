@@ -48,19 +48,19 @@ class CollectionWrapper(object):
 
     def insert(self, doc_or_docs, username=None):
         if not isinstance(doc_or_docs, list):
-            if isinstance(doc_or_docs, dict):
-                docs = [DBDoc(doc_or_docs)]
-            elif isinstance(doc_or_docs, DBDoc):
+            if isinstance(doc_or_docs, DBDoc):
                 docs = [doc_or_docs]
+            elif isinstance(doc_or_docs, dict):
+                docs = [DBDoc(doc_or_docs)]
             else:
                 raise TypeError, item
         else:
             docs = []
             for item in doc_or_docs:
-                if isinstance(item, dict):
-                    docs.append(DBDoc(item))
-                elif isinstance(item, DBDoc):
+                if isinstance(item, DBDoc):
                     docs.append(item)
+                elif isinstance(item, dict):
+                    docs.append(DBDoc(item))
                 else:
                     raise TypeError, item
         
