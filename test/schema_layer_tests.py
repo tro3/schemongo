@@ -473,3 +473,49 @@ class SchemaLayerTests(TestCase):
         self.assertEqual(self.db.test.find({'_id':1})[0].data, 1)
         
         
+    def test_datatypes(self, ):
+        self.db.register_schema('test', {
+            "name": {"type": "string"},                
+            "bool": {"type": "boolean"},
+            "int": {"type": "integer"},
+            "float": {"type": "float"},
+            "list": {"type": "list"},
+            "hash": {"type": "dict"},
+            "datetime": {"type": "datetime"},
+        })
+
+        data = {
+            'name': 'Bob',
+            'bool': True,
+            'int': 4,
+            'float': '2.34',
+            'list': [2, 'a'],
+            'hash': {'a': 2},
+            'datetime': '2011-01-01',
+        }
+        errs = self.db.test.insert(data)
+        self.assertIsNone(errs)
+
+        data = self.db.test.find_one({'_id':1})
+        self.assertEqual(data, {
+            '_id': 1,
+            'name': 'Bob',
+            'bool': True,
+            'int': 4,
+            'float': 2.34,
+            'list': [2, 'a'],
+            'hash': {'a': 2, '_id': 1},
+            'datetime': datetime.datetime(2011,1,1)
+        })
+
+        data = json.loads(self.db.test.serialize(data))
+        self.assertEqual(data, {
+            '_id': 1,
+            'name': 'Bob',
+            'bool': True,
+            'int': 4,
+            'float': 2.34,
+            'list': [2, 'a'],
+            'hash': {'a': 2, '_id': 1},
+            'datetime': '2011-01-01T00:00:00',
+        })
