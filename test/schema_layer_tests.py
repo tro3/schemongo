@@ -6,6 +6,7 @@ import mongomock
 from schemongo import schema_layer
 from schemongo.db_layer.db_doc import DBDoc
 
+import json
 from pprint import pprint as p
 
 
@@ -343,3 +344,46 @@ class SchemaLayerTests(TestCase):
         errs = self.db.test.update(data)
         self.assertEqual(errs, ["name: 'Fred' is not unique"])
         
+
+    def test_serialize(self):
+        self.db.register_schema('test', {
+            "name": {"type": "string", 'required': True, 'unique': True},
+            "subdoc": {"type": "dict", "schema": {
+                "data": {"type":"integer", 'default': 3, 'read_only': True},
+                "sdata": {'type': 'integer', 'serialize': lambda elem: elem.data + 1},
+            }},
+            "doclist": {"type": "list", "schema": {"type": "dict", "schema": {
+                "name": {"type":"string", 'allowed': ['Fred', 'George']},
+                "caps": {"type":"string", 'auto': lambda elem: elem.name.upper()},
+                "init": {"type":"string", 'auto_init': lambda elem: elem.name.lower()},
+                    
+            }}},            
+        })
+
+        data = {
+            "name": "Bob",
+            "doclist": [{'name': 'Fred'}]
+        }
+        errs = self.db.test.insert(data)
+        self.assertIsNone(errs)
+        
+        inst = self.db.test.find_one({'_id':1})
+
+        text = self.db.test.serialize(inst)
+        data = json.loads(text)
+        self.assertEqual(data, {
+            "_id": 1,
+            "name": "Bob",
+            "subdoc": {
+                "_id": 1,
+                "data": 3,
+                "sdata": 4,
+            },
+            "doclist": [{
+                "_id": 1,
+                "name": 'Fred',
+                "caps": 'FRED',
+                "init": 'fred'
+            }],
+        })
+

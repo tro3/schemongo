@@ -4,6 +4,7 @@ from ..db_layer import database
 from ..db_layer.db_doc import DBDoc
 from schema_doc import enforce_datatypes, merge, run_auto_funcs, generate_prototype, \
                        enforce_schema_behaviors, is_object, is_list_of_objects
+from serialization import serialize
 
 from pprint import pprint as p
 
@@ -80,6 +81,11 @@ class SchemaCollectionWrapper(object):
                 return errs
             
         self.coll.update(data, username)
+
+    def serialize(self, item):
+        return serialize(self.schema, item)
+    
+
 
     
 class CursorWrapper(object):
