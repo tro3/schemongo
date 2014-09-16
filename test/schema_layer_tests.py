@@ -431,3 +431,9 @@ class SchemaLayerTests(TestCase):
         data = json.loads(text)
         self.assertEqual(data['data'], '2011-04-05T00:00:00')
         
+        data = {
+            "name": "Bob",
+            "data": 'fred',
+        }
+        errs = self.db.test.insert(data)
+        self.assertEqual(errs, ["data: Could not convert 'fred' to type 'datetime'"])

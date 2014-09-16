@@ -34,7 +34,7 @@ New log schema:
 '''
 
 
-def diff_recursive(new, old, path='', patch=True):
+def diff_recursive(new, old, path=''):
     'Object level'
     changes = []
     for key, val in new.items():
@@ -42,27 +42,26 @@ def diff_recursive(new, old, path='', patch=True):
             if key not in old:
                 changes.append({path+key: {'action': 'field added'}})
             else:
-                changes.extend(diff_recursive(val, old[key], key + '/', patch))
+                changes.extend(diff_recursive(val, old[key], key + '/'))
         elif isinstance(val, list):
             if key not in old:
                 changes.append({path+key: {'action': 'field added'}})
             else:
-                changes.extend(diff_lists_recursive(val, old[key], path+key, patch))
+                changes.extend(diff_lists_recursive(val, old[key], path+key))
         else:
             if key not in old:
                 changes.append({path+key: {'action': 'field added'}})
             elif old[key] != val:
                 changes.append({path+key: old[key]})
                 
-    if not patch:
-        for key, val in old.items():
-            if key not in new:
-                changes.append({path+key: {'action': 'field removed', 'data': val}})
+    for key, val in old.items():
+        if key not in new:
+            changes.append({path+key: {'action': 'field removed', 'data': val}})
                 
     return changes
     
     
-def diff_lists_recursive(new, old, path, patch):
+def diff_lists_recursive(new, old, path):
     changes = []
     
     if any(map(lambda x: isinstance(x, dict), new+old)):
@@ -79,7 +78,7 @@ def diff_lists_recursive(new, old, path, patch):
             return x['_id']
         else:
             return x
-        
+
     oldvals = map(simple_val, old)
     newvals = map(simple_val, new)
     matched = []
@@ -116,7 +115,7 @@ def diff_lists_recursive(new, old, path, patch):
             oldval = filter(lambda x: x['_id']==_id, old)[0]
             newval = filter(lambda x: x['_id']==_id, new)[0]
             ind = newvals.index(_id)
-            changes.extend(diff_recursive(newval, oldval, '%s/%i/' % (path, ind), patch))
+            changes.extend(diff_recursive(newval, oldval, '%s/%i/' % (path, ind)))
 
 
     return changes

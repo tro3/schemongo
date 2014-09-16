@@ -4,6 +4,7 @@ import datetime
 
 import mongomock
 from schemongo import db_layer
+from schemongo.db_layer.db_doc import DBDoc
 
 from pprint import pprint as p
 
@@ -215,3 +216,74 @@ class DBLayerTests(TestCase):
                 {"_id": 2, "name": "george"},
             ]
         })
+
+
+    def test_bulk_insert(self):
+        self.db.collection.insert([
+            {"name":"bob"},
+            DBDoc({"name":"fred"}),
+        ])
+                
+        inst = self.db.collection.find_one({"name": 'fred'})
+        self.assertEqual(inst, {
+            "_id": 2,
+            "name":"fred",
+        })
+        
+        inst = self.db.history_find({"collection":"collection", "id":2})[0]
+        self.assertEqual(inst['username'], None)
+        self.assertEqual(inst['action'], 'document created')
+
+
+    def test_none_found(self):
+        inst = self.db.collection.find_one({"name": 'fred'})
+        self.assertIsNone(inst)
+        
+        
+    def test_history(self, ):
+        self.db.collection.insert({
+            'name':'bob'
+        })
+        self.db.collection.update({
+            '_id':1,
+            'name':'bob',
+            'location':'France',
+            'address': {
+                'street': "Rue d'Idiots",
+                'city': 'Paris'
+            },
+            'other_names':['fred', 'george'],
+        })
+
+        inst = self.db.history_find({"collection":"collection", "id":1})[1]
+        inst['changes'].sort()
+        self.assertEqual(inst['changes'], [
+            {'address': {'action': 'field added'}},
+            {'location': {'action': 'field added'}},
+            {'other_names': {'action': 'field added'}}
+        ])
+
+        self.assertEqual(self.db.history_find({"collection":"collection", "id":1}).count(), 2)
+        self.db.collection.update({
+            '_id':1,
+            'name':'bob',
+        })
+        self.assertEqual(self.db.history_find({"collection":"collection", "id":1}).count(), 2)
+
+    
+        self.db.collection.update({
+            '_id':1,
+            'name':'bob',
+            'address': {
+                'street': "Rue d'Idiots",
+                'city': 'Paris'
+            },
+            'other_names':['george', 'fred'],
+        }, direct=True)
+
+        inst = self.db.history_find({"collection":"collection", "id":1})[2]
+        inst['changes'].sort()
+        self.assertEqual(inst['changes'], [
+            {'location': {'action': 'field removed', 'data': 'France'}},
+            {'other_names': {'action': 'array reordered', 'data': ['fred','george']}},
+        ])

@@ -86,21 +86,26 @@ class CollectionWrapper(object):
             return ids[0]
 
 
-    def update(self, doc, username=None):
+    def update(self, doc, username=None, direct=False):
         assert '_id' in doc, "Cannot update document without _id attribute"
         data = DBDoc(self._collection.find_one(doc['_id']))
         old = deepcopy(data)
-        merge(data, doc)
+        if direct:
+            data = doc
+        else:
+            merge(data, doc)
         enforce_ids(data, doc['_id'])
         result = self._collection.update({'_id': doc['_id']}, data)
 
         if result.get('ok', False):
-            self._db.history_update(
-                collection = self._collection.name,
-                id = doc['_id'],
-                username = username,
-                diff = diff_recursive(data, old)
-            )
+            changes = diff_recursive(data, old)
+            if changes:
+                self._db.history_update(
+                    collection = self._collection.name,
+                    id = doc['_id'],
+                    username = username,
+                    diff = changes
+                )
 
         return result
         

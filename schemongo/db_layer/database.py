@@ -15,6 +15,7 @@ class DatabaseWrapper(object):
 
 
     def history_find(self, spec=None, fields=None, skip=0, limit=0, sort=None):
+        sort = sort or [('_id',1)]
         return self._db._history.find(
             spec = spec,
             skip = skip,
