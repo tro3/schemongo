@@ -275,20 +275,20 @@ class SchemaLayerTests(TestCase):
     def test_required(self):
         self.db.register_schema('test', {
             "name": {"type": "string"},                
-            "data": {"type": "integer"},
+            "data": {"type": "datetime"},
             "data2": {"type": "integer", "required": True},
         })
 
         data = {
             "name": "Bob",
-            "data": 4
+            "data": '2011-04-05',
         }
         errs = self.db.test.insert(data)
         self.assertEqual(errs, ["data2: value is required"])
 
         data = {
             "name": "Fred",
-            "data": 4,
+            "data": '2011-04-05',
             "data2": 5
         }
         errs = self.db.test.insert(data)
@@ -297,7 +297,7 @@ class SchemaLayerTests(TestCase):
         data = {
             "_id": 1,
             "name": "Fred",
-            "data": 4,
+            "data": '2011-04-05',
             "data2": None
         }
         errs = self.db.test.update(data)
@@ -355,7 +355,7 @@ class SchemaLayerTests(TestCase):
             "doclist": {"type": "list", "schema": {"type": "dict", "schema": {
                 "name": {"type":"string", 'allowed': ['Fred', 'George']},
                 "caps": {"type":"string", 'auto': lambda elem: elem.name.upper()},
-                "init": {"type":"string", 'auto_init': lambda elem: elem.name.lower()},
+                "init": {"type":"string", 'auto_init': lambda elem: elem.get_parent().get_root().name.lower()},
                 "really": {'type': 'string', 'serialize': lambda elem: elem.name + ', really'},                    
             }}},            
         })
@@ -383,7 +383,7 @@ class SchemaLayerTests(TestCase):
                 "_id": 1,
                 "name": 'Fred',
                 "caps": 'FRED',
-                "init": 'fred',
+                "init": 'bob',
                 "really": 'Fred, really'
             }],
         })
@@ -401,3 +401,33 @@ class SchemaLayerTests(TestCase):
                 "sdata": 4,
             },
         })
+
+
+    def test_datetime(self):
+        self.db.register_schema('test', {
+            "name": {"type": "string"},                
+            "data": {"type": "datetime"},
+        })
+
+        data = {
+            "name": "Bob",
+            "data": '2011-04-05',
+        }
+        errs = self.db.test.insert(data)
+        self.assertIsNone(errs)
+
+        data = {
+            "name": "Fred",
+            "data": datetime.datetime(2011,04,05),
+        }
+        errs = self.db.test.insert(data)
+        self.assertIsNone(errs)
+        
+        self.assertEqual(self.db.test.find_one({'_id':1}).data, datetime.datetime(2011,04,05))
+        self.assertEqual(self.db.test.find_one({'_id':2}).data, datetime.datetime(2011,04,05))
+
+        inst = self.db.test.find_one({'_id':2})
+        text = self.db.test.serialize(inst)
+        data = json.loads(text)
+        self.assertEqual(data['data'], '2011-04-05T00:00:00')
+        

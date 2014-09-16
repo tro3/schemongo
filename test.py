@@ -5,7 +5,6 @@ import unittest
 
 sys.path.append('test')
 sys.path.append('test/lib')
-import test
 
 
 try:
@@ -22,6 +21,8 @@ if covering:
                             data_file = 'test/coverage/.coverage'
                             )
     cov.start()
+
+import test
 
 loader = unittest.TestLoader()
 suite = unittest.TestSuite(loader.loadTestsFromModule(test))

@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import datetime
+import dateutil.parser
 from ..db_layer.db_doc import DBDoc, DBDocList, enforce_ids, merge
 
 """
@@ -53,10 +55,10 @@ def is_read_only(val):
 # Collapsing
 
 def _convert_datetime(val):
-    if isinstance(value, datetime.datetime):
-        return value
-    if type(value) in [str, unicode]:
-        return dateutil.parser.parse(value)
+    if isinstance(val, datetime.datetime):
+        return val
+    if type(val) in [str, unicode]:
+        return dateutil.parser.parse(val)
     raise
 
 def _convert_reference(val):
@@ -175,9 +177,6 @@ def run_auto_funcs(schema, data):
         elif is_list_of_objects(schema[key]):
             [run_auto_funcs(schema[key]['schema']['schema'], x) for x in data[key]]
         elif 'auto_init' in schema[key] and not data._id:
-            if not isinstance(data, DBDoc):
-                import pdb
-                pdb.set_trace()
             data[key] = schema[key]['auto_init'](data)
         elif 'auto' in schema[key]:
             data[key] = schema[key]['auto'](data)
