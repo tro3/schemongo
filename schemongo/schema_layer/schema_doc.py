@@ -130,7 +130,7 @@ def enforce_schema_behaviors(schema, data, path=''):
             for i, item in enumerate(data[key]):
                 errs.extend(enforce_schema_behaviors(schema[key]['schema']['schema'], item, path + '%s/%s' % (key, i)))
         else:
-            if 'allowed' in schema[key] and schema[key]['allowed']:
+            if 'allowed' in schema[key]:
                 allowed = schema[key]['allowed']
                 if callable(allowed):
                     allowed = allowed(data)
@@ -138,7 +138,9 @@ def enforce_schema_behaviors(schema, data, path=''):
                     errs.append('%s%s: %s' % (path, key, "'required' parameter '%s' did not evaluate to an iterable" % allowed))
                 elif data[key] not in allowed:
                     errs.append('%s%s: %s' % (path, key, "'%s' not one of allowed values" % data[key]))
-                    
+            if 'required' in schema[key] and schema[key]['required']:
+                if key not in data or data[key] is None:
+                    errs.append('%s%s: %s' % (path, key, "value is required"))
     return errs
 
         

@@ -74,6 +74,10 @@ class SchemaCollectionWrapper(object):
                 return errs
         merge(data, incoming)
         run_auto_funcs(self.schema, data)
+        if not direct:
+            errs = enforce_schema_behaviors(self.schema, data)
+            if errs:
+                return errs
             
         self.coll.update(data, username)
 

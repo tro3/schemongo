@@ -260,3 +260,44 @@ class SchemaLayerTests(TestCase):
         }
         errs = self.db.test.insert(data)
         self.assertIsNone(errs)
+
+        data = {
+            "_id": 1,
+            "name": "Bob",
+            "data": 4,
+            "data2": 3
+        }
+        errs = self.db.test.update(data)
+        self.assertEqual(errs, ["name: 'Bob' not one of allowed values"])
+
+
+    def test_required(self):
+        self.db.register_schema('test', {
+            "name": {"type": "string"},                
+            "data": {"type": "integer"},
+            "data2": {"type": "integer", "required": True},
+        })
+
+        data = {
+            "name": "Bob",
+            "data": 4
+        }
+        errs = self.db.test.insert(data)
+        self.assertEqual(errs, ["data2: value is required"])
+
+        data = {
+            "name": "Fred",
+            "data": 4,
+            "data2": 5
+        }
+        errs = self.db.test.insert(data)
+        self.assertIsNone(errs)
+
+        data = {
+            "_id": 1,
+            "name": "Fred",
+            "data": 4,
+            "data2": None
+        }
+        errs = self.db.test.update(data)
+        self.assertEqual(errs, ["data2: value is required"])
