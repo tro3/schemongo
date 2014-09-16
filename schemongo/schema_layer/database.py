@@ -57,7 +57,7 @@ class SchemaCollectionWrapper(object):
             merge(data, incoming)
             run_auto_funcs(self.schema, data)
             if not direct:
-                errs = enforce_schema_behaviors(self.schema, data)
+                errs = enforce_schema_behaviors(self.schema, data, self)
                 if errs:
                     return errs
             datas.append(data)
@@ -75,7 +75,7 @@ class SchemaCollectionWrapper(object):
         merge(data, incoming)
         run_auto_funcs(self.schema, data)
         if not direct:
-            errs = enforce_schema_behaviors(self.schema, data)
+            errs = enforce_schema_behaviors(self.schema, data, self)
             if errs:
                 return errs
             

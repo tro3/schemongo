@@ -120,15 +120,15 @@ def enforce_datatypes(schema, data, path=''):
     return errs
 
 
-def enforce_schema_behaviors(schema, data, path=''):
+def enforce_schema_behaviors(schema, data, db_coll, path=''):
     errs = []
     for key in data.keys():
         path = path and (path + '/')
         if is_object(schema[key]):
-            errs.extend(enforce_schema_behaviors(schema[key]['schema'], data[key], path + key))
+            errs.extend(enforce_schema_behaviors(schema[key]['schema'], data[key], db_coll, path + key))
         elif is_list_of_objects(schema[key]):
             for i, item in enumerate(data[key]):
-                errs.extend(enforce_schema_behaviors(schema[key]['schema']['schema'], item, path + '%s/%s' % (key, i)))
+                errs.extend(enforce_schema_behaviors(schema[key]['schema']['schema'], item, db_coll, path + '%s/%s' % (key, i)))
         else:
             if 'allowed' in schema[key]:
                 allowed = schema[key]['allowed']
@@ -141,9 +141,13 @@ def enforce_schema_behaviors(schema, data, path=''):
             if 'required' in schema[key] and schema[key]['required']:
                 if key not in data or data[key] is None:
                     errs.append('%s%s: %s' % (path, key, "value is required"))
+            if 'unique' in schema[key] and schema[key]['unique']:
+                if db_coll.find({key: data[key]}).count():
+                    errs.append('%s%s: %s' % (path, key, "'%s' is not unique" % data[key]))
+                        
     return errs
 
-        
+
 def generate_prototype(schema):
     result = {}
     for key in schema.keys():
@@ -162,7 +166,7 @@ def generate_prototype(schema):
         else:
             result[key] = None
     return DBDoc(result)
-    
+
 
 def run_auto_funcs(schema, data):
     for key in schema.keys():

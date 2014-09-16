@@ -301,3 +301,45 @@ class SchemaLayerTests(TestCase):
         }
         errs = self.db.test.update(data)
         self.assertEqual(errs, ["data2: value is required"])
+
+
+    def test_unique(self):
+        self.db.register_schema('test', {
+            "name": {"type": "string", "unique": True},                
+            "data": {"type": "integer"},
+            "data2": {"type": "integer", "required": True},
+        })
+
+        data = {
+            "name": "Fred",
+            "data": 4,
+            "data2": 5
+        }
+        errs = self.db.test.insert(data)
+        self.assertIsNone(errs)
+
+        data = {
+            "name": "Fred",
+            "data": 5,
+            "data2": 6
+        }
+        errs = self.db.test.insert(data)
+        self.assertEqual(errs, ["name: 'Fred' is not unique"])
+        
+        data = {
+            "name": "Bob",
+            "data": 5,
+            "data2": 6
+        }
+        errs = self.db.test.insert(data)
+        self.assertIsNone(errs)
+
+        data = {
+            "_id": 2,
+            "name": "Fred",
+            "data": 5,
+            "data2": 6
+        }
+        errs = self.db.test.update(data)
+        self.assertEqual(errs, ["name: 'Fred' is not unique"])
+        
