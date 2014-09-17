@@ -158,6 +158,5 @@ dbdoc.get_root()
 To Do
 -----
 
-Complete top API testing
-Reference error handling
 Improve response interface
+Reference error handling

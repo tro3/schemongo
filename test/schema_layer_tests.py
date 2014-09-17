@@ -664,3 +664,44 @@ class SchemaLayerTests(TestCase):
             '_id': 1,
             'full_name': 'Bob Paris'
         })
+
+
+    def test_references_error(self):
+        self.db.register_schema('users', {
+            "first_name": {"type": "string"},
+            "last_name": {"type": "string"},
+            "full_name": {'type': 'string', 'serialize': lambda e: '%s %s' % (e.first_name, e.last_name)}
+        })
+        self.db.register_schema('test', {
+            "name": {"type": "string"},
+            "contact": {
+                'type': 'reference',
+                'collection': 'users',
+                'fields': ['full_name'],
+            }
+        })
+
+        errs = self.db.users.insert([
+            {'first_name':'Bob', 'last_name': 'Paris'},
+            {'first_name':'Fred', 'last_name': 'Caen'},
+        ])
+        self.assertIsNone(errs)
+        
+        data = {
+            'name': 'Samsung',
+            'contact': {
+                '_id': 3
+            }
+        }
+        errs = self.db.test.insert(data)
+        self.assertIsNone(errs)
+
+        inst = self.db.test.find_one({'_id':1})
+        data = json.loads(self.db.test.serialize(inst))
+        self.assertEqual(data, {
+            '_id': 1,
+            'name': 'Samsung',
+            'contact': {
+                '_err': 'reference not found'
+            }
+        })

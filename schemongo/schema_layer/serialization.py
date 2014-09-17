@@ -31,7 +31,11 @@ def update_serial_recursive(schema, item, data):
         if schema[key]['type'] == 'datetime':
             data[key] = data[key].isoformat()
         if schema[key]['type'] == 'reference':
-            data[key] = get_serial_dict(item[key].__schema, item[key])
+            if hasattr(item[key], '__schema'):
+                data[key] = get_serial_dict(item[key].__schema, item[key])
+            else:
+                data[key] = {'_err': 'reference not found'}
+                
 
     for key in schema.keys():
         if 'serialize' in schema[key]:

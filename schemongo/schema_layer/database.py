@@ -113,4 +113,5 @@ def expand_references(db, schema, data):
             [expand_references(db, schema[key]['schema']['schema'], x) for x in data[key]]
         elif schema[key]['type'] == 'reference':
             data[key] = db[schema[key]['collection']].find_one({'_id':data[key]}, fields=schema[key].get('fields', None))
-            data[key].__schema = db.schemas[schema[key]['collection']]
+            if data[key]:
+                data[key].__schema = db.schemas[schema[key]['collection']]
