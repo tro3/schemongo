@@ -9,14 +9,16 @@ meaning that server-side code access is a low priority.
 Data Types
 ==========
     
-    * Boolean
-    * Integer
-    * Float
-    * String
-    * Datetime
-    * Reference
-    * List of <uncontrolled datatype>
-    * Hash of <uncontrolled datatype>: <uncontrolled datatype>
+    * Boolean *(type: 'boolean')*
+    * Integer *(type: 'integer')*
+    * Float *(type: 'float')*
+    * String *(type: 'string')*
+    * Datetime *(type: 'datetime')*
+    * Reference *(type: 'reference')*
+    * List of <datatype> *(type: 'list', with schema)*
+    * Object *(type: 'dict', with schema)*
+    * List of <uncontrolled datatype> *(type: 'list', no schema)*
+    * Hash of <uncontrolled datatype>: <uncontrolled datatype> *(type: 'dict', no schema)*
 
 
 Behaviors
@@ -39,7 +41,14 @@ Schema Format
 Normal version::
 
     {
-        "name": {"type": "string"},
+        "first_name": {"type": "string"},
+        
+        "last_name": {"type": "string"},
+        
+        "full_name": {
+            "type": "string",
+            "serialize": lambda element: "%s %s" % (element.first_name, element.last_name)
+        },
 
         "subdoc": {
             "type": "dict",
@@ -63,7 +72,14 @@ Normal version::
                     "name": {"type":"string"}
                 }
             }
-        }            
+        },
+        
+        "user_reference": {
+            'type': 'reference',
+            'collection': 'users',
+            'fields': ['username', 'location'],
+        }
+
     }
 
 
@@ -71,6 +87,12 @@ More terse version::
 
     {
         "name": {"type": "string"},
+
+        "last_name": {"type": "string"},
+        
+        "full_name": {"type": "string",
+            "serialize": lambda e: "%s %s" % (e.first_name, e.last_name)
+        },
     
         "subdoc": {"type": "dict", "schema": {
             "data": {"type":"integer"}
@@ -83,4 +105,11 @@ More terse version::
         "doclist": {"type": "list", "schema": {"type": "dict", "schema": {
             "name": {"type":"string"}
         }}},            
+
+        "user_reference": {
+            'type': 'reference',
+            'collection': 'users',
+            'fields': ['username', 'location'],
+        }
+
     }
