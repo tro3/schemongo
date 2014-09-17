@@ -51,7 +51,6 @@ def is_read_only(val):
 
 
 
-
 # Collapsing
 
 def _convert_datetime(val):
@@ -62,7 +61,7 @@ def _convert_datetime(val):
     raise
 
 def _convert_reference(val):
-    pass
+    return val['_id']
 
 def _convert_internal_ref(val):
     pass
@@ -181,3 +180,5 @@ def run_auto_funcs(schema, data):
             data[key] = schema[key]['auto_init'](data)
         elif 'auto' in schema[key]:
             data[key] = schema[key]['auto'](data)
+
+

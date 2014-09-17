@@ -519,3 +519,148 @@ class SchemaLayerTests(TestCase):
             'hash': {'a': 2, '_id': 1},
             'datetime': '2011-01-01T00:00:00',
         })
+
+
+    def test_references(self):
+        self.db.register_schema('users', {
+            "username": {"type": "string"},
+            "group": {"type": "string"},
+            "location": {"type": "string"},
+        })
+        self.db.register_schema('test', {
+            "name": {"type": "string"},
+            "contact": {
+                'type': 'reference',
+                'collection': 'users',
+                'fields': ['username', 'location'],
+            }
+        })
+        
+        errs = self.db.users.insert([
+            {'username':'bob', 'group':'Sales', 'location': 'Paris'},
+            {'username':'fred', 'group':'Sales', 'location': 'Caen'},
+        ])
+        self.assertIsNone(errs)
+        
+        data = {
+            'name': 'Samsung',
+            'contact': {
+                '_id': 1,
+                'username': 'bob'
+            }
+        }
+        errs = self.db.test.insert(data)
+        self.assertIsNone(errs)
+        
+        inst = self.db.test.find_one({'_id':1})
+        self.assertEqual(inst, {
+            '_id': 1,
+            'name': 'Samsung',
+            'contact': {
+                '_id': 1,
+                'username': 'bob',
+                'group': 'Sales',
+                'location': 'Paris'
+            }
+        })
+        self.assertEqual(inst.contact._projection, {
+            '_id': 1,
+            'username': 'bob',
+            'location': 'Paris'
+        })
+
+        data = json.loads(self.db.test.serialize(inst))
+        self.assertEqual(data, {
+            '_id': 1,
+            'name': 'Samsung',
+            'contact': {
+                '_id': 1,
+                'username': 'bob',
+                'location': 'Paris'
+            }
+        })
+
+        data = {
+            '_id': 1,
+            'contact': {
+                '_id': 2,
+            }
+        }
+        errs = self.db.test.update(data)
+        self.assertIsNone(errs)
+
+        inst = self.db.test.find_one({'_id':1})
+        data = json.loads(self.db.test.serialize(inst))
+        self.assertEqual(data, {
+            '_id': 1,
+            'name': 'Samsung',
+            'contact': {
+                '_id': 2,
+                'username': 'fred',
+                'location': 'Caen'
+            }
+        })
+
+
+    def test_serialized_references(self):
+        self.db.register_schema('users', {
+            "first_name": {"type": "string"},
+            "last_name": {"type": "string"},
+            "full_name": {'type': 'string', 'serialize': lambda e: '%s %s' % (e.first_name, e.last_name)}
+        })
+        self.db.register_schema('test', {
+            "name": {"type": "string"},
+            "contact": {
+                'type': 'reference',
+                'collection': 'users',
+                'fields': ['full_name'],
+            }
+        })
+
+        errs = self.db.users.insert([
+            {'first_name':'Bob', 'last_name': 'Paris'},
+            {'first_name':'Fred', 'last_name': 'Caen'},
+        ])
+        self.assertIsNone(errs)
+        
+        data = {
+            'name': 'Samsung',
+            'contact': {
+                '_id': 1,
+                'full_name': 'Bob Paris'
+            }
+        }
+        errs = self.db.test.insert(data)
+        self.assertIsNone(errs)
+
+        inst = self.db.test.find_one({'_id':1})
+        data = json.loads(self.db.test.serialize(inst))
+        self.assertEqual(data, {
+            '_id': 1,
+            'name': 'Samsung',
+            'contact': {
+                '_id': 1,
+                'full_name': 'Bob Paris'
+            }
+        })
+
+
+    def test_serialized_projection(self):
+        self.db.register_schema('test', {
+            "first_name": {"type": "string"},
+            "last_name": {"type": "string"},
+            "full_name": {'type': 'string', 'serialize': lambda e: '%s %s' % (e.first_name, e.last_name)}
+        })
+
+        errs = self.db.test.insert([
+            {'first_name':'Bob', 'last_name': 'Paris'},
+            {'first_name':'Fred', 'last_name': 'Caen'},
+        ])
+        self.assertIsNone(errs)
+
+        inst = self.db.test.find_one({'_id':1}, fields=['full_name'])
+        data = json.loads(self.db.test.serialize(inst))
+        self.assertEqual(data, {
+            '_id': 1,
+            'full_name': 'Bob Paris'
+        })

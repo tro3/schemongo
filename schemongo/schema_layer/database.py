@@ -27,6 +27,9 @@ class SchemaDatabaseWrapper(database.DatabaseWrapper):
                 self._add_id_recursive(schema[key]['schema']['schema'])
     
     def __getattr__(self, key):
+        return self[key]
+
+    def __getitem__(self, key):
         return SchemaCollectionWrapper(self.schemas[key], self._db[key], self)
         
 
@@ -34,13 +37,16 @@ class SchemaDatabaseWrapper(database.DatabaseWrapper):
 class SchemaCollectionWrapper(object):
     def __init__(self, schema, collection, db):
         self.schema = schema
+        self.db = db
         self.coll = database.CollectionWrapper(collection, db)
 
     def find(self, spec=None, fields=None, skip=0, limit=0, sort=None):
         return self.coll.find(spec, fields, skip, limit, sort) 
 
     def find_one(self, spec_or_id, fields=None, skip=0, sort=None):
-        return self.coll.find_one(spec_or_id, fields, skip, sort)
+        tmp = self.coll.find_one(spec_or_id, fields, skip, sort)
+        expand_references(self.db, self.schema, tmp)
+        return tmp
     
     def insert(self, doc_or_docs, username=None, direct=False):
         if not isinstance(doc_or_docs, list):
@@ -90,3 +96,13 @@ class SchemaCollectionWrapper(object):
     
 
 
+
+def expand_references(db, schema, data):
+    for key in schema.keys():
+        if is_object(schema[key]):
+            expand_references(db, schema[key]['schema'], data[key])
+        elif is_list_of_objects(schema[key]):
+            [expand_references(db, schema[key]['schema']['schema'], x) for x in data[key]]
+        elif schema[key]['type'] == 'reference':
+            data[key] = db[schema[key]['collection']].find_one({'_id':data[key]}, fields=schema[key].get('fields', None))
+            data[key].__schema = db.schemas[schema[key]['collection']]
