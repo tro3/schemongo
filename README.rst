@@ -43,11 +43,19 @@ Normal version::
     {
         "first_name": {"type": "string"},
         
-        "last_name": {"type": "string"},
+        "last_name": {
+            "type": "string",
+            "required": True
+        },
         
         "full_name": {
             "type": "string",
             "serialize": lambda element: "%s %s" % (element.first_name, element.last_name)
+        },
+
+        "employee_id": {
+            "type": "integer",
+            "unique": True
         },
 
         "subdoc": {
@@ -88,12 +96,14 @@ More terse version::
     {
         "name": {"type": "string"},
 
-        "last_name": {"type": "string"},
+        "last_name": {"type": "string", "required": True},
         
         "full_name": {"type": "string",
             "serialize": lambda e: "%s %s" % (e.first_name, e.last_name)
         },
     
+        "employee_id": {"type": "integer", "unique": True},
+
         "subdoc": {"type": "dict", "schema": {
             "data": {"type":"integer"}
         }},
