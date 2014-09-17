@@ -4,6 +4,11 @@ import json
 import copy
 from schema_doc import is_object, is_list_of_objects
 
+
+def serialize_list(schema, items):
+    results = [get_serial_dict(schema, x) for x in items]
+    return json.dumps(results)
+
 def serialize(schema, item):
     return json.dumps(get_serial_dict(schema, item))
     

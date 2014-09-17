@@ -4,7 +4,7 @@ from ..db_layer import database
 from ..db_layer.db_doc import DBDoc
 from schema_doc import enforce_datatypes, merge, run_auto_funcs, generate_prototype, \
                        enforce_schema_behaviors, is_object, is_list_of_objects
-from serialization import serialize
+from serialization import serialize, serialize_list
 
 from pprint import pprint as p
 
@@ -93,6 +93,12 @@ class SchemaCollectionWrapper(object):
 
     def serialize(self, item):
         return serialize(self.schema, item)
+
+    def serialize_list(self, items):
+        return serialize_list(self.schema, items)
+
+    def find_and_serialize(self, spec=None, fields=None, skip=0, limit=0, sort=None):
+        return self.serialize_list(self.find(spec, fields, skip, limit, sort))
 
     def find_one_and_serialize(self, spec_or_id, fields=None, skip=0, sort=None):
         return self.serialize(self.find_one(spec_or_id, fields, skip, sort))

@@ -14,6 +14,8 @@ class CollectionWrapper(object):
         return self._collection.find().count() and self._collection.find().sort('_id',-1).limit(1)[0]['_id']
 
     def find(self, spec=None, fields=None, skip=0, limit=0, sort=None):
+        if sort and fields:
+            assert all(x[0] in fields for x in sort), "'sort' fields must be included in 'fields' list"
         raw_cursor = self._collection.find(
             spec = spec,
             skip = skip,
@@ -140,6 +142,9 @@ class CursorWrapper(object):
             
     def __getitem__(self, index):
         return DBDoc(self._raw_cursor[index], None, self._projected_cursor and self._projected_cursor[index])
+        
+    def all(self):
+        return [self[i] for i in range(self.count())]
         
     def count(self):
         return self._raw_cursor.count()
