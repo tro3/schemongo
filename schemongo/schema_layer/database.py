@@ -93,7 +93,9 @@ class SchemaCollectionWrapper(object):
 
     def serialize(self, item):
         return serialize(self.schema, item)
-    
+
+    def find_one_and_serialize(self, spec_or_id, fields=None, skip=0, sort=None):
+        return self.serialize(self.find_one(spec_or_id, fields, skip, sort))
 
 
 

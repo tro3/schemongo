@@ -1,5 +1,5 @@
 
-Introduction
+py-schemongo
 ============
 
 Schemongo is an extra layer around PyMongo to add schema enforcement to the system.  It is optimized for client-side web flows,
@@ -94,7 +94,7 @@ Normal version::
 More terse version::
 
     {
-        "name": {"type": "string"},
+        "first_name": {"type": "string"},
 
         "last_name": {"type": "string", "required": True},
         
@@ -123,3 +123,41 @@ More terse version::
         }
 
     }
+
+
+
+API
+===
+
+Module Level
+------------
+
+schemongo.init()
+
+
+Schemongo DB
+------------
+
+db.insert()
+db.update()
+db.remove()
+db.find()
+db.find_one()
+db.serialize()
+db.find_and_serialize()
+db.find_one_and_serialize()
+
+
+Schemongo DBDoc
+--------------
+
+dbdoc.get_parent()
+dbdoc.get_root()
+
+
+To Do
+-----
+
+Complete top API testing
+Reference error handling
+Improve response interface
