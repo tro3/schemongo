@@ -91,6 +91,11 @@ class SchemaCollectionWrapper(object):
             
         self.coll.update(data, username, direct)
 
+    def remove(self, spec_or_id, username=None):
+        self.coll.remove(spec_or_id, username)
+
+
+
     def serialize(self, item):
         return serialize(self.schema, item)
 

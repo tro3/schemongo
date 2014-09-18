@@ -128,5 +128,9 @@ class TopAPITests(TestCase):
             {'_id':2, 'full_name': 'Michael Jackson', 'last_name': 'Jackson'},
         ])
                 
-        
+        self.db.users.remove({'_id':2})        
+        self.assertEqual(json.loads(self.db.users.find_and_serialize({}, fields=['full_name', 'last_name'], sort=[('last_name', -1)])), [
+            {'_id':3, 'full_name': 'Elvis Presley', 'last_name': 'Presley'},
+            {'_id':1, 'full_name': 'Rick James', 'last_name': 'James'},
+        ])
 

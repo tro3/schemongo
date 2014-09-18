@@ -132,31 +132,26 @@ API
 Module Level
 ------------
 
-schemongo.init()
+* schemongo.init(client*=None*, dbname*=None*)
 
 
 Schemongo DB
 ------------
 
-db.insert()
-db.update()
-db.remove()
-db.find()
-db.find_one()
-db.serialize()
-db.find_and_serialize()
-db.find_one_and_serialize()
+* db.insert(doc_or_docs, username*=None*, direct*=False*)
+* db.update(incoming, username*=None*, direct*=False*)
+* db.remove(spec_or_id, username*=None*)
+* db.find(spec*=None*, fields*=None*, skip*=0*, limit*=0*, sort*=None*)
+* db.find_one(spec_or_id, fields*=None*, skip*=0*, sort*=None*)
+* db.serialize(item)
+* db.serialize_list(item)
+* db.find_and_serialize(spec*=None*, fields*=None*, skip*=0*, limit*=0*, sort*=None*)
+* db.find_one_and_serialize(spec_or_id, fields*=None*, skip*=0*, sort*=None*)
 
 
 Schemongo DBDoc
 --------------
 
-dbdoc.get_parent()
-dbdoc.get_root()
+* dbdoc.get_parent()
+* dbdoc.get_root()
 
-
-To Do
------
-
-Improve response interface
-Reference error handling
