@@ -132,26 +132,32 @@ API
 Module Level
 ------------
 
-* schemongo.init(client*=None*, dbname*=None*)
+* schemongo.\ **init**\ ([client, dbname])
 
 
-Schemongo DB
-------------
+SchemaDatabaseWrapper
+---------------------
 
-* db.insert(doc_or_docs, username*=None*, direct*=False*)
-* db.update(incoming, username*=None*, direct*=False*)
-* db.remove(spec_or_id, username*=None*)
-* db.find(spec*=None*, fields*=None*, skip*=0*, limit*=0*, sort*=None*)
-* db.find_one(spec_or_id, fields*=None*, skip*=0*, sort*=None*)
-* db.serialize(item)
-* db.serialize_list(item)
-* db.find_and_serialize(spec*=None*, fields*=None*, skip*=0*, limit*=0*, sort*=None*)
-* db.find_one_and_serialize(spec_or_id, fields*=None*, skip*=0*, sort*=None*)
+* SchemaDatabaseWrapper.\ **register_schema**\ (*key*, *schema*)
 
 
-Schemongo DBDoc
---------------
+SchemaCollectionWrapper
+-----------------------
 
-* dbdoc.get_parent()
-* dbdoc.get_root()
+* SchemaCollectionWrapper.\ **insert**\ (*doc_or_docs*\ [, *username*, *direct*])
+* SchemaCollectionWrapper.\ **update**\ (*incoming*\ [, *username*, *direct*])
+* SchemaCollectionWrapper.\ **remove**\ (*spec_or_id*\ [, *username*])
+* SchemaCollectionWrapper.\ **find**\ ([*spec*, *fields*, *skip*, *limit*, *sort*])
+* SchemaCollectionWrapper.\ **find_one**\ ([*spec_or_id*, *fields*, *skip*, *sort*])
+* SchemaCollectionWrapper.\ **serialize**\ (*item*)
+* SchemaCollectionWrapper.\ **serialize_list**\ (*item*)
+* SchemaCollectionWrapper.\ **find_and_serialize**\ ([*spec*, *fields*, *skip*, *limit*, *sort*])
+* SchemaCollectionWrapper.\ **find_one_and_serialize**\ (*spec_or_id*\ [, *fields*, *skip*, *sort*])
+
+
+DBDoc
+-----
+
+* DBDoc.\ **get_parent**\ ()
+* DBDoc.\ **get_root**\ ()
 
