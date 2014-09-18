@@ -132,7 +132,7 @@ API
 Module Level
 ------------
 
-* schemongo.\ **init**\ ([client, dbname])
+* schemongo.\ **init**\ ([*client*, *dbname*])
 
 
 SchemaDatabaseWrapper
