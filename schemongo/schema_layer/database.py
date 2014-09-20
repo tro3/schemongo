@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from ..db_layer import database
+from ..db_layer.collection import CursorWrapper
 from ..db_layer.db_doc import DBDoc
 from schema_doc import enforce_datatypes, merge, run_auto_funcs, generate_prototype, \
                        enforce_schema_behaviors, is_object, is_list_of_objects
@@ -41,7 +42,7 @@ class SchemaCollectionWrapper(object):
         self.coll = database.CollectionWrapper(collection, db)
 
     def find(self, spec=None, fields=None, skip=0, limit=0, sort=None):
-        return self.coll.find(spec, fields, skip, limit, sort) 
+        return SchemaCursorWrapper(self.coll.find(spec, fields, skip, limit, sort), self.db, self.schema)
 
     def find_one(self, spec_or_id, fields=None, skip=0, sort=None):
         tmp = self.coll.find_one(spec_or_id, fields, skip, sort)
@@ -94,8 +95,6 @@ class SchemaCollectionWrapper(object):
     def remove(self, spec_or_id, username=None):
         self.coll.remove(spec_or_id, username)
 
-
-
     def serialize(self, item):
         return serialize(self.schema, item)
 
@@ -107,6 +106,19 @@ class SchemaCollectionWrapper(object):
 
     def find_one_and_serialize(self, spec_or_id, fields=None, skip=0, sort=None):
         return self.serialize(self.find_one(spec_or_id, fields, skip, sort))
+
+
+
+class SchemaCursorWrapper(CursorWrapper):
+    def __init__(self, cursor, db, schema):
+        CursorWrapper.__init__(self, cursor._raw_cursor, cursor._projected_cursor)
+        self.db = db
+        self.schema = schema
+
+    def __getitem__(self, index):
+        tmp = CursorWrapper.__getitem__(self, index)
+        expand_references(self.db, self.schema, tmp)
+        return tmp
 
 
 

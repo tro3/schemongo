@@ -589,7 +589,7 @@ class SchemaLayerTests(TestCase):
         errs = self.db.test.update(data)
         self.assertIsNone(errs)
 
-        inst = self.db.test.find_one({'_id':1})
+        inst = self.db.test.find({'_id':1})[0]
         data = json.loads(self.db.test.serialize(inst))
         self.assertEqual(data, {
             '_id': 1,
