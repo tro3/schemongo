@@ -354,6 +354,7 @@ class SchemaLayerTests(TestCase):
             }},
             "doclist": {"type": "list", "schema": {"type": "dict", "schema": {
                 "name": {"type":"string", 'allowed': ['Fred', 'George']},
+                "data": {"type":"string"},
                 "caps": {"type":"string", 'auto': lambda elem: elem.name.upper()},
                 "init": {"type":"string", 'auto_init': lambda elem: elem.get_parent().get_root().name.lower()},
                 "really": {'type': 'string', 'serialize': lambda elem: elem.name + ', really'},                    
@@ -382,6 +383,7 @@ class SchemaLayerTests(TestCase):
             "doclist": [{
                 "_id": 1,
                 "name": 'Fred',
+                "data": None,
                 "caps": 'FRED',
                 "init": 'bob',
                 "really": 'Fred, really'
@@ -704,4 +706,56 @@ class SchemaLayerTests(TestCase):
             'contact': {
                 '_err': 'reference not found'
             }
+        })
+
+
+    def test_update_prototype(self):
+        self.db.register_schema('test', {
+            "name": {"type": "string", 'required': True, 'unique': True},
+            "subdoc": {"type": "dict", "schema": {
+                "data": {"type":"integer", 'default': 3, 'read_only': True},
+                "sdata": {'type': 'integer', 'serialize': lambda elem: elem.data + 1},
+            }},
+            "doclist": {"type": "list", "schema": {"type": "dict", "schema": {
+                "name": {"type":"string", 'allowed': ['Fred', 'George']},
+                "data": {"type":"string"},
+                "caps": {"type":"string", 'auto': lambda elem: elem.name.upper()},
+                "init": {"type":"string", 'auto_init': lambda elem: elem.get_parent().get_root().name.lower()},
+                "really": {'type': 'string', 'serialize': lambda elem: elem.name + ', really'},                    
+            }}},            
+        })
+
+        data = {
+            "name": "Bob",
+            "doclist": []
+        }
+        errs = self.db.test.insert(data)
+        self.assertIsNone(errs)
+
+        data = {
+            "_id": 1,
+            "name": "Bob",
+            "doclist": [{'name': 'George'}]
+        }
+        errs = self.db.test.update(data)
+        self.assertIsNone(errs)
+        
+
+        data = json.loads(self.db.test.serialize(self.db.test.find_one({'_id':1})))
+        self.assertEqual(data, {
+            "_id": 1,
+            "name": "Bob",
+            "subdoc": {
+                "_id": 1,
+                "data": 3,
+                "sdata": 4,
+            },
+            "doclist": [{
+                "_id": 1,
+                "name": 'George',
+                "data": None,
+                "caps": 'GEORGE',
+                "init": 'bob',
+                "really": 'George, really'
+            }],
         })

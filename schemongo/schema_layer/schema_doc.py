@@ -144,31 +144,48 @@ def enforce_schema_behaviors(schema, data, db_coll, path=''):
                 if key not in data or data[key] is None:
                     errs.append('%s%s: %s' % (path, key, "value is required"))
             if 'unique' in schema[key] and schema[key]['unique']:
-                if db_coll.find({key: data[key]}).count():
+                if db_coll.find({key: data[key], '_id': {'$ne': data.get('_id', 0)}}).count():
                     errs.append('%s%s: %s' % (path, key, "'%s' is not unique" % data[key]))
                         
     return errs
 
 
-def generate_prototype(schema):
+def generate_prototype(schema, parent=None):
     result = {}
     for key in schema.keys():
         if 'serialize' in schema[key]:
             continue
-        if is_object(schema[key]):
-            result[key] = generate_prototype(schema[key]['schema'])
-        elif is_list_of_objects(schema[key]):
-            result[key] = DBDocList([], result)
-        elif 'default' in schema[key]:
-            result[key] = schema[key]['default']
-        elif schema[key]['type'] == 'dict':
-            result[key] = {}
-        elif schema[key]['type'] == 'list':
-            result[key] = []
-        else:
-            result[key] = None
-    return DBDoc(result)
+        result[key] = _generate_prototype_field(schema[key])
+    return DBDoc(result, parent)
 
+
+def _generate_prototype_field(schema, parent=None):
+    if is_object(schema):
+        return generate_prototype(schema['schema'], parent)
+    elif is_list_of_objects(schema):
+        return DBDocList([], parent)
+    elif 'default' in schema:
+        return schema['default']
+    elif schema['type'] == 'dict':
+        return {}
+    elif schema['type'] == 'list':
+        return []
+    else:
+        return None
+
+
+def fill_in_prototypes(schema, doc):
+    for key in schema.keys():
+        if key == '_id':
+            continue
+        if key not in doc and 'serialize' not in schema[key]:
+            doc[key] = _generate_prototype_field(schema[key], doc)
+
+        if is_object(schema[key]):
+            fill_in_prototypes(schema[key]['schema'], doc[key])
+        elif is_list_of_objects(schema[key]):
+            [fill_in_prototypes(schema[key]['schema']['schema'], item) for item in doc[key]]
+        
 
 def run_auto_funcs(schema, data):
     for key in schema.keys():

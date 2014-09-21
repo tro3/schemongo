@@ -3,7 +3,7 @@
 from ..db_layer import database
 from ..db_layer.collection import CursorWrapper
 from ..db_layer.db_doc import DBDoc
-from schema_doc import enforce_datatypes, merge, run_auto_funcs, generate_prototype, \
+from schema_doc import enforce_datatypes, merge, run_auto_funcs, generate_prototype, fill_in_prototypes, \
                        enforce_schema_behaviors, is_object, is_list_of_objects
 from serialization import serialize, serialize_list
 
@@ -57,13 +57,16 @@ class SchemaCollectionWrapper(object):
             
         datas = []
         for incoming in docs:
-            data = generate_prototype(self.schema)
             if not direct:
                 errs = enforce_datatypes(self.schema, incoming)
                 if errs:
                     return errs
+                
+            data = generate_prototype(self.schema)
             merge(data, incoming)
+            fill_in_prototypes(self.schema, data)
             run_auto_funcs(self.schema, data)
+            
             if not direct:
                 errs = enforce_schema_behaviors(self.schema, data, self)
                 if errs:
@@ -75,15 +78,18 @@ class SchemaCollectionWrapper(object):
     def update(self, incoming, username=None, direct=False):
         assert '_id' in incoming, "Cannot update document without _id attribute"
 
-        data = self.find_one({"_id":incoming["_id"]})
         if not direct:
             errs = enforce_datatypes(self.schema, incoming)
             if errs:
                 return errs
+
         if not direct:
+            data = self.find_one({"_id":incoming["_id"]})
             merge(data, incoming)
+            fill_in_prototypes(self.schema, data)
         else:
             data = DBDoc(incoming)
+
         run_auto_funcs(self.schema, data)
         if not direct:
             errs = enforce_schema_behaviors(self.schema, data, self)
