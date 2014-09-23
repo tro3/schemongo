@@ -49,39 +49,33 @@ class SchemaCollectionWrapper(object):
         expand_references(self.db, self.schema, tmp)
         return tmp
     
-    def insert(self, doc_or_docs, username=None, direct=False):
-        if not isinstance(doc_or_docs, list):
-            docs = [doc_or_docs]
-        else:
-            docs = doc_or_docs
+    
+    def process_insert(self, incoming, direct):
+        if not direct:
+            errs = enforce_datatypes(self.schema, incoming)
+            if errs:
+                return (None, errs)
             
-        datas = []
-        for incoming in docs:
-            if not direct:
-                errs = enforce_datatypes(self.schema, incoming)
-                if errs:
-                    return errs
-                
-            data = generate_prototype(self.schema)
-            merge(data, incoming)
-            fill_in_prototypes(self.schema, data)
-            run_auto_funcs(self.schema, data)
-            
-            if not direct:
-                errs = enforce_schema_behaviors(self.schema, data, self)
-                if errs:
-                    return errs
-            datas.append(data)
+        data = generate_prototype(self.schema)
+        merge(data, incoming)
+        fill_in_prototypes(self.schema, data)
+        run_auto_funcs(self.schema, data)
         
-        self.coll.insert(datas, username)
-
-    def update(self, incoming, username=None, direct=False):
+        if not direct:
+            errs = enforce_schema_behaviors(self.schema, data, self)
+            if errs:
+                return (None, errs)
+            
+        return (data, [])
+    
+    
+    def process_update(self, incoming, direct):
         assert '_id' in incoming, "Cannot update document without _id attribute"
 
         if not direct:
             errs = enforce_datatypes(self.schema, incoming)
             if errs:
-                return errs
+                return (None, errs)
 
         if not direct:
             data = self.find_one({"_id":incoming["_id"]})
@@ -94,7 +88,31 @@ class SchemaCollectionWrapper(object):
         if not direct:
             errs = enforce_schema_behaviors(self.schema, data, self)
             if errs:
+                return (None, errs)
+            
+        return (data, [])
+
+    
+    
+    def insert(self, doc_or_docs, username=None, direct=False):
+        if not isinstance(doc_or_docs, list):
+            docs = [doc_or_docs]
+        else:
+            docs = doc_or_docs
+            
+        datas = []
+        for incoming in docs:
+            data, errs = self.process_insert(incoming, direct)
+            if errs:
                 return errs
+            datas.append(data)
+        
+        self.coll.insert(datas, username)
+
+    def update(self, incoming, username=None, direct=False):
+        data, errs = self.process_update(incoming, direct)
+        if errs:
+            return errs
             
         self.coll.update(data, username, direct)
 
