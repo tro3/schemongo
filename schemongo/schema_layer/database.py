@@ -50,48 +50,56 @@ class SchemaCollectionWrapper(object):
         return tmp
     
     
-    def process_insert(self, incoming, direct):
-        if not direct:
-            errs = enforce_datatypes(self.schema, incoming)
-            if errs:
-                return (None, errs)
+    def process_insert(self, incoming):
+        errs = enforce_datatypes(self.schema, incoming)
+        if errs:
+            return (None, errs)
             
         data = generate_prototype(self.schema)
         merge(data, incoming)
         fill_in_prototypes(self.schema, data)
         run_auto_funcs(self.schema, data)
         
-        if not direct:
-            errs = enforce_schema_behaviors(self.schema, data, self)
-            if errs:
-                return (None, errs)
+        errs = enforce_schema_behaviors(self.schema, data, self)
+        if errs:
+            return (None, errs)
             
+        return (data, [])
+
+
+    def process_direct_insert(self, incoming):
+        data = generate_prototype(self.schema)
+        merge(data, incoming)
+        fill_in_prototypes(self.schema, data)
+        run_auto_funcs(self.schema, data)
         return (data, [])
     
     
-    def process_update(self, incoming, direct):
+    def process_update(self, incoming):
         assert '_id' in incoming, "Cannot update document without _id attribute"
 
-        if not direct:
-            errs = enforce_datatypes(self.schema, incoming)
-            if errs:
-                return (None, errs)
+        errs = enforce_datatypes(self.schema, incoming)
+        if errs:
+            return (None, errs)
 
-        if not direct:
-            data = self.find_one({"_id":incoming["_id"]})
-            merge(data, incoming)
-            fill_in_prototypes(self.schema, data)
-        else:
-            data = DBDoc(incoming)
-
+        data = self.find_one({"_id":incoming["_id"]})
+        merge(data, incoming)
+        fill_in_prototypes(self.schema, data)
         run_auto_funcs(self.schema, data)
-        if not direct:
-            errs = enforce_schema_behaviors(self.schema, data, self)
-            if errs:
-                return (None, errs)
+
+        errs = enforce_schema_behaviors(self.schema, data, self)
+        if errs:
+            return (None, errs)
             
         return (data, [])
 
+
+    def process_direct_update(self, incoming):
+        data = self.find_one({"_id":incoming["_id"]})
+        merge(data, incoming)
+        fill_in_prototypes(self.schema, data)
+        run_auto_funcs(self.schema, data)
+        return (data, [])
     
     
     def insert(self, doc_or_docs, username=None, direct=False):
@@ -102,7 +110,10 @@ class SchemaCollectionWrapper(object):
             
         datas = []
         for incoming in docs:
-            data, errs = self.process_insert(incoming, direct)
+            if direct:
+                data, errs = self.process_direct_insert(incoming)
+            else:
+                data, errs = self.process_insert(incoming)
             if errs:
                 return errs
             datas.append(data)
@@ -110,7 +121,10 @@ class SchemaCollectionWrapper(object):
         self.coll.insert(datas, username)
 
     def update(self, incoming, username=None, direct=False):
-        data, errs = self.process_update(incoming, direct)
+        if direct:
+            data, errs = self.process_direct_update(incoming)
+        else:
+            data, errs = self.process_update(incoming)
         if errs:
             return errs
             
