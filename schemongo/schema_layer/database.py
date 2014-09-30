@@ -115,10 +115,12 @@ class SchemaCollectionWrapper(object):
             else:
                 data, errs = self.process_insert(incoming)
             if errs:
-                return errs
+                return ([], errs)
             datas.append(data)
         
-        self.coll.insert(datas, username)
+        ids = self.coll.insert(datas, username)
+        return (ids, None)
+
 
     def update(self, incoming, username=None, direct=False):
         if direct:
@@ -130,17 +132,22 @@ class SchemaCollectionWrapper(object):
             
         self.coll.update(data, username, direct)
 
+
     def remove(self, spec_or_id, username=None):
         self.coll.remove(spec_or_id, username)
+
 
     def serialize(self, item):
         return serialize(self.schema, item)
 
+
     def serialize_list(self, items):
         return serialize_list(self.schema, items)
 
+
     def find_and_serialize(self, spec=None, fields=None, skip=0, limit=0, sort=None):
         return self.serialize_list(self.find(spec, fields, skip, limit, sort))
+
 
     def find_one_and_serialize(self, spec_or_id, fields=None, skip=0, sort=None):
         return self.serialize(self.find_one(spec_or_id, fields, skip, sort))
