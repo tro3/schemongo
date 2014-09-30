@@ -134,3 +134,33 @@ class TopAPITests(TestCase):
             {'_id':1, 'full_name': 'Rick James', 'last_name': 'James'},
         ])
 
+
+    def test_db_serial_dict(self):
+        self.db.register_schema('users', {
+            "first_name": {"type": "string"},
+            "last_name": {"type": "string"},
+            "full_name": {"type": "string",
+                "serialize": lambda e: "%s %s" % (e.first_name, e.last_name)
+            }
+        })
+
+        ids, errs = self.db.users.insert([
+            {'first_name': 'Rick', 'last_name': 'James'},
+            {'first_name': 'Michael', 'last_name': 'Jackson'},
+            {'first_name': 'Elvis', 'last_name': 'Presley'},
+        ])
+        self.assertIsNone(errs)
+
+        inst = self.db.users.find_one_and_serial_dict({'last_name':'Jackson'})
+        self.assertEqual(inst, {
+            '_id': 2,
+            'first_name': 'Michael',
+            'last_name': 'Jackson',
+            'full_name': 'Michael Jackson'
+        })
+        
+        self.assertEqual(self.db.users.find_and_serial_dict({}, fields=['full_name', 'last_name'], sort=[('last_name', -1)]), [
+            {'_id':3, 'full_name': 'Elvis Presley', 'last_name': 'Presley'},
+            {'_id':1, 'full_name': 'Rick James', 'last_name': 'James'},
+            {'_id':2, 'full_name': 'Michael Jackson', 'last_name': 'Jackson'},
+        ])

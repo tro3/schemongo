@@ -6,17 +6,18 @@ from schema_doc import is_object, is_list_of_objects
 
 
 def serialize_list(schema, items):
-    results = [get_serial_dict(schema, x) for x in items]
-    return json.dumps(results)
+    return json.dumps(get_serial_list(schema, items))
 
 def serialize(schema, item):
     return json.dumps(get_serial_dict(schema, item))
-    
     
 def get_serial_dict(schema, item):
     data = copy.deepcopy(item._projection or item)
     update_serial_recursive(schema, item, data)
     return data
+
+def get_serial_list(schema, items):
+    return [get_serial_dict(schema, x) for x in items]
     
     
 def update_serial_recursive(schema, item, data):
