@@ -45,10 +45,10 @@ class TopAPITests(TestCase):
             }    
         })
 
-        errs = self.db.users.insert({'username': 'bob', 'location': 'Paris'})
+        ids, errs = self.db.users.insert({'username': 'bob', 'location': 'Paris'})
         self.assertIsNone(errs)
                 
-        errs = self.db.test.insert({
+        ids, errs = self.db.test.insert({
             "first_name": "Rick",
             "last_name": "James",
             "employee_id": 284746,
@@ -96,9 +96,9 @@ class TopAPITests(TestCase):
             }
         })
 
-        errs = self.db.users.insert({'first_name': 'Rick', 'last_name': 'James'})
+        ids, errs = self.db.users.insert({'first_name': 'Rick', 'last_name': 'James'})
         self.assertIsNone(errs)
-        errs = self.db.users.insert([
+        ids, errs = self.db.users.insert([
             {'first_name': 'Michele', 'last_name': 'Jackson'},
             {'first_name': 'Elvis', 'last_name': 'Presley'},
         ])

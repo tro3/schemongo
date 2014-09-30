@@ -38,7 +38,7 @@ class SchemaLayerTests(TestCase):
             "num_list": [4,5],
             "doclist": [{"name": "Fred"}]
         }
-        errs = self.db.test.insert(data)
+        ids, errs = self.db.test.insert(data)
         self.assertIsNone(errs)
         
         data = self.db.test.find_one({"name":"Bob"})
@@ -94,11 +94,11 @@ class SchemaLayerTests(TestCase):
             "num_list": [4,5],
             "doclist": [{"name": "Fred"}]
         }
-        errs = self.db.test.insert(data)
+        ids, errs = self.db.test.insert(data)
         self.assertEqual(errs, ["subdoc/data: Could not convert 'fred' to type 'integer'"])
 
         data['subdoc']['data'] = 1
-        errs = self.db.test.insert(data)
+        ids, errs = self.db.test.insert(data)
         self.assertIsNone(errs)
 
         errs = self.db.test.update({"_id":1, "subdoc":{"data":"fred"}})
@@ -129,7 +129,7 @@ class SchemaLayerTests(TestCase):
             "num_list": [4,5],
             "doclist": [{}]
         }
-        errs = self.db.test.insert(data, direct=True)
+        ids, errs = self.db.test.insert(data, direct=True)
         self.assertIsNone(errs)
 
         data = self.db.test.find_one({"_id":1})
@@ -182,7 +182,7 @@ class SchemaLayerTests(TestCase):
         data = {
             "name": "Bob",
         }
-        errs = self.db.test.insert(data)
+        ids, errs = self.db.test.insert(data)
         self.assertIsNone(errs)
 
         data = self.db.test.find_one({"_id":1})
@@ -214,7 +214,7 @@ class SchemaLayerTests(TestCase):
         data = {
             "name": "Bob",
         }
-        errs = self.db.test.insert(data)
+        ids, errs = self.db.test.insert(data)
         self.assertIsNone(errs)
 
         data = self.db.test.find_one({"_id":1})
@@ -228,7 +228,7 @@ class SchemaLayerTests(TestCase):
             "name": "Fred",
             "data": "Goodbye"
         }
-        errs = self.db.test.insert(data)
+        ids, errs = self.db.test.insert(data)
         self.assertIsNone(errs)
 
         data = self.db.test.find_one({"_id":2})
@@ -251,7 +251,7 @@ class SchemaLayerTests(TestCase):
             "data": 4,
             "data2": 8
         }
-        errs = self.db.test.insert(data)
+        ids, errs = self.db.test.insert(data)
         self.assertEqual(errs, ["name: 'Bob' not one of allowed values", "data2: '8' not one of allowed values"])
 
         data = {
@@ -259,7 +259,7 @@ class SchemaLayerTests(TestCase):
             "data": 4,
             "data2": 5
         }
-        errs = self.db.test.insert(data)
+        ids, errs = self.db.test.insert(data)
         self.assertIsNone(errs)
 
         data = {
@@ -283,7 +283,7 @@ class SchemaLayerTests(TestCase):
             "name": "Bob",
             "data": '2011-04-05',
         }
-        errs = self.db.test.insert(data)
+        ids, errs = self.db.test.insert(data)
         self.assertEqual(errs, ["data2: value is required"])
 
         data = {
@@ -291,7 +291,7 @@ class SchemaLayerTests(TestCase):
             "data": '2011-04-05',
             "data2": 5
         }
-        errs = self.db.test.insert(data)
+        ids, errs = self.db.test.insert(data)
         self.assertIsNone(errs)
 
         data = {
@@ -316,7 +316,7 @@ class SchemaLayerTests(TestCase):
             "data": 4,
             "data2": 5
         }
-        errs = self.db.test.insert(data)
+        ids, errs = self.db.test.insert(data)
         self.assertIsNone(errs)
 
         data = {
@@ -324,7 +324,7 @@ class SchemaLayerTests(TestCase):
             "data": 5,
             "data2": 6
         }
-        errs = self.db.test.insert(data)
+        ids, errs = self.db.test.insert(data)
         self.assertEqual(errs, ["name: 'Fred' is not unique"])
         
         data = {
@@ -332,7 +332,7 @@ class SchemaLayerTests(TestCase):
             "data": 5,
             "data2": 6
         }
-        errs = self.db.test.insert(data)
+        ids, errs = self.db.test.insert(data)
         self.assertIsNone(errs)
 
         data = {
@@ -365,7 +365,7 @@ class SchemaLayerTests(TestCase):
             "name": "Bob",
             "doclist": [{'name': 'Fred'}]
         }
-        errs = self.db.test.insert(data)
+        ids, errs = self.db.test.insert(data)
         self.assertIsNone(errs)
         
         inst = self.db.test.find_one({'_id':1})
@@ -415,14 +415,14 @@ class SchemaLayerTests(TestCase):
             "name": "Bob",
             "data": '2011-04-05',
         }
-        errs = self.db.test.insert(data)
+        ids, errs = self.db.test.insert(data)
         self.assertIsNone(errs)
 
         data = {
             "name": "Fred",
             "data": datetime.datetime(2011,04,05),
         }
-        errs = self.db.test.insert(data)
+        ids, errs = self.db.test.insert(data)
         self.assertIsNone(errs)
         
         self.assertEqual(self.db.test.find_one({'_id':1}).data, datetime.datetime(2011,04,05))
@@ -437,7 +437,7 @@ class SchemaLayerTests(TestCase):
             "name": "Bob",
             "data": 'fred',
         }
-        errs = self.db.test.insert(data)
+        ids, errs = self.db.test.insert(data)
         self.assertEqual(errs, ["data: Could not convert 'fred' to type 'datetime'"])
 
 
@@ -451,7 +451,7 @@ class SchemaLayerTests(TestCase):
             {"name": "Bob", "data": '2011'},
             {"name": "Fred", "data": '2012'},
         ]
-        errs = self.db.test.insert(data)
+        ids, errs = self.db.test.insert(data)
         self.assertIsNone(errs)
         self.assertEqual(self.db.test.find({}).count(), 2)
 
@@ -466,7 +466,7 @@ class SchemaLayerTests(TestCase):
             {"name": "Bob", "data": 1},
             {"name": "Fred", "data": 2},
         ]
-        errs = self.db.test.insert(data)
+        ids, errs = self.db.test.insert(data)
         self.assertIsNone(errs)
         
         self.assertEqual(self.db.test.find({'_id':1})[0].data, None)
@@ -495,7 +495,7 @@ class SchemaLayerTests(TestCase):
             'hash': {'a': 2},
             'datetime': '2011-01-01',
         }
-        errs = self.db.test.insert(data)
+        ids, errs = self.db.test.insert(data)
         self.assertIsNone(errs)
 
         data = self.db.test.find_one({'_id':1})
@@ -538,11 +538,12 @@ class SchemaLayerTests(TestCase):
             }
         })
         
-        errs = self.db.users.insert([
+        ids, errs = self.db.users.insert([
             {'username':'bob', 'group':'Sales', 'location': 'Paris'},
             {'username':'fred', 'group':'Sales', 'location': 'Caen'},
         ])
         self.assertIsNone(errs)
+        self.assertEqual(ids, [1,2])
         
         data = {
             'name': 'Samsung',
@@ -551,7 +552,7 @@ class SchemaLayerTests(TestCase):
                 'username': 'bob'
             }
         }
-        errs = self.db.test.insert(data)
+        ids, errs = self.db.test.insert(data)
         self.assertIsNone(errs)
         
         inst = self.db.test.find_one({'_id':1})
@@ -619,7 +620,7 @@ class SchemaLayerTests(TestCase):
             }
         })
 
-        errs = self.db.users.insert([
+        ids, errs = self.db.users.insert([
             {'first_name':'Bob', 'last_name': 'Paris'},
             {'first_name':'Fred', 'last_name': 'Caen'},
         ])
@@ -632,7 +633,7 @@ class SchemaLayerTests(TestCase):
                 'full_name': 'Bob Paris'
             }
         }
-        errs = self.db.test.insert(data)
+        ids, errs = self.db.test.insert(data)
         self.assertIsNone(errs)
 
         inst = self.db.test.find_one({'_id':1})
@@ -654,7 +655,7 @@ class SchemaLayerTests(TestCase):
             "full_name": {'type': 'string', 'serialize': lambda e: '%s %s' % (e.first_name, e.last_name)}
         })
 
-        errs = self.db.test.insert([
+        ids, errs = self.db.test.insert([
             {'first_name':'Bob', 'last_name': 'Paris'},
             {'first_name':'Fred', 'last_name': 'Caen'},
         ])
@@ -683,7 +684,7 @@ class SchemaLayerTests(TestCase):
             }
         })
 
-        errs = self.db.users.insert([
+        ids, errs = self.db.users.insert([
             {'first_name':'Bob', 'last_name': 'Paris'},
             {'first_name':'Fred', 'last_name': 'Caen'},
         ])
@@ -695,7 +696,7 @@ class SchemaLayerTests(TestCase):
                 '_id': 3
             }
         }
-        errs = self.db.test.insert(data)
+        ids, errs = self.db.test.insert(data)
         self.assertIsNone(errs)
 
         inst = self.db.test.find_one({'_id':1})
@@ -729,7 +730,7 @@ class SchemaLayerTests(TestCase):
             "name": "Bob",
             "doclist": []
         }
-        errs = self.db.test.insert(data)
+        ids, errs = self.db.test.insert(data)
         self.assertIsNone(errs)
 
         data = {
