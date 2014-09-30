@@ -109,14 +109,19 @@ class SchemaCollectionWrapper(object):
             docs = doc_or_docs
             
         datas = []
+        errs = []
         for incoming in docs:
             if direct:
-                data, errs = self.process_direct_insert(incoming)
+                data, local_errs = self.process_direct_insert(incoming)
             else:
-                data, errs = self.process_insert(incoming)
-            if errs:
-                return ([], errs)
+                data, local_errs = self.process_insert(incoming)
             datas.append(data)
+            errs.append(local_errs)
+
+        if any(errs) and len(errs) == 1:
+            return ([], errs[0])
+        if any(errs) and len(errs) > 1:
+            return ([], errs)
         
         ids = self.coll.insert(datas, username)
         return (ids, None)
