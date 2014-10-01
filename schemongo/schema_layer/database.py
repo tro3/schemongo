@@ -146,6 +146,10 @@ class SchemaCollectionWrapper(object):
         return serialize(self.schema, item)
 
 
+    def get_serial_dict(self, item):
+        return get_serial_dict(self.schema, item)
+
+
     def serialize_list(self, items):
         return serialize_list(self.schema, items)
 
