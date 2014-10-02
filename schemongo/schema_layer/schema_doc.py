@@ -124,7 +124,7 @@ def enforce_datatypes(schema, data, path=''):
 
 def enforce_schema_behaviors(schema, data, db_coll, path=''):
     errs = []
-    for key in data.keys():
+    for key in [x for x in data.keys() if x in schema]:
         path = path and (path + '/')
         if is_object(schema[key]):
             errs.extend(enforce_schema_behaviors(schema[key]['schema'], data[key], db_coll, path + key))
