@@ -185,6 +185,10 @@ def fill_in_prototypes(schema, doc):
             fill_in_prototypes(schema[key]['schema'], doc[key])
         elif is_list_of_objects(schema[key]):
             [fill_in_prototypes(schema[key]['schema']['schema'], item) for item in doc[key]]
+            
+    for key in doc.keys():
+        if key not in schema:
+            doc.pop(key)
         
 
 def run_auto_funcs(schema, data):

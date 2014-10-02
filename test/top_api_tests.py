@@ -164,3 +164,23 @@ class TopAPITests(TestCase):
             {'_id':1, 'full_name': 'Rick James', 'last_name': 'James'},
             {'_id':2, 'full_name': 'Michael Jackson', 'last_name': 'Jackson'},
         ])
+
+
+    def test_schema_change(self):
+        self.db.register_schema('users', {
+            "first_name": {"type": "string", 'default': 'bob'},
+        })
+
+        ids, errs = self.db.users.insert([
+            {'last_name2': 'James'},
+        ], direct=True)
+        self.assertIsNone(errs)
+
+        errs = self.db.users.update({'_id':1})
+        self.assertIsNone(errs)
+
+        inst = self.db.users.find_one_and_serial_dict(1)
+        self.assertEqual(inst, {
+            '_id': 1,
+            'first_name': 'bob',
+        })
