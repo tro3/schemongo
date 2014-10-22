@@ -10,9 +10,6 @@ class CollectionWrapper(object):
         self._collection = collection
         self._db = db
                 
-    def _get_max_id(self):
-        return self._collection.find().count() and self._collection.find().sort('_id',-1).limit(1)[0]['_id']
-
     def find(self, spec=None, fields=None, skip=0, limit=0, sort=None):
         if sort and fields:
             assert all(x[0] in fields for x in sort), "'sort' fields must be included in 'fields' list"
@@ -67,20 +64,26 @@ class CollectionWrapper(object):
                     raise TypeError, item
         
         ids = []
-        new_id = self._get_max_id() + 1
+        new_id = self._db.get_next_id(self._collection.name)
 
-        for item in docs:
-            new_id = enforce_ids(item, new_id)
-            id = self._collection.insert(item)
-            
-            if id:
-                self._db.history_insert(
-                    collection = self._collection.name,
-                    id = id,
-                    username = username
-                )
-            
-            ids.append(id)
+        assert not any(x.get('_id', 0) in x for x in docs), "Cannot insert document with _id attribute"
+
+        try:
+            for item in docs:
+                new_id = enforce_ids(item, new_id)
+                id = self._collection.insert(item)
+                
+                if id:
+                    self._db.history_insert(
+                        collection = self._collection.name,
+                        id = id,
+                        username = username
+                    )
+                
+                ids.append(id)
+        finally:                
+            if ids:
+                self._db.set_last_id(self._collection.name, max(ids))
         
         if isinstance(doc_or_docs, list):
             return ids

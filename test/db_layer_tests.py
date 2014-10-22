@@ -218,6 +218,51 @@ class DBLayerTests(TestCase):
         })
 
 
+    def test_remove_and_add(self):
+        self.db.collection.insert({
+            "name":"bob",
+            "subdoc": {
+                "data": 1
+            },
+            "num_list": [1,2],
+            "doclist": [
+                {"name": "fred"},
+                {"name": "george"},
+            ]
+        })
+        
+        self.assertEqual(self.db.collection.find().count(), 1)
+        self.db.collection.remove(1, 'bob')
+        self.assertEqual(self.db.collection.find().count(), 0)
+
+        self.db.collection.insert({
+            "name":"bob",
+            "subdoc": {
+                "data": 1
+            },
+            "num_list": [1,2],
+            "doclist": [
+                {"name": "fred"},
+                {"name": "george"},
+            ]
+        })
+        
+        inst = self.db.collection.find_one({"name":"bob"})
+        self.assertEqual(inst, {
+            "_id": 2,
+            "name":"bob",
+            "subdoc": {
+                "_id": 1,
+                "data": 1
+            },
+            "num_list": [1,2],
+            "doclist": [
+                {"_id": 1, "name": "fred"},
+                {"_id": 2, "name": "george"},
+            ]
+        })
+
+
     def test_bulk_insert(self):
         self.db.collection.insert([
             {"name":"bob"},

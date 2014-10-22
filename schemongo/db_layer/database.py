@@ -12,6 +12,20 @@ class DatabaseWrapper(object):
         
     def __getattr__(self, key):
         return CollectionWrapper(self._db[key], self)
+    
+    
+    def get_next_id(self, collection):
+        if not self._db._ids.find({'collection': collection}).count():
+            return 1
+        return self._db._ids.find_one({'collection': collection})['last_id'] + 1
+
+
+    def set_last_id(self, collection, id):
+        if not self._db._ids.find({'collection': collection}).count():
+            self._db._ids.insert({'collection': collection, 'last_id':id})
+        else:
+            self._db._ids.update({'collection': collection}, {'collection': collection, 'last_id':id})
+    
 
 
     def history_find(self, spec=None, fields=None, skip=0, limit=0, sort=None):
