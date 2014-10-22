@@ -22,7 +22,9 @@ def get_serial_list(schema, items):
     
 def update_serial_recursive(schema, item, data):
     for key in data.keys():
-        if is_object(schema[key]):
+        if key not in schema:
+            data.pop(key)
+        elif is_object(schema[key]):
             update_serial_recursive(schema[key]['schema'], item[key], data[key])
         elif is_list_of_objects(schema[key]):
             for i in range(len(data[key])):
