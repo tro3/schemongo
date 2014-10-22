@@ -2,7 +2,7 @@
 
 import json
 import copy
-from schema_doc import is_object, is_list_of_objects
+from schema_doc import is_object, is_list_of_objects, is_list_of_references
 
 
 def serialize_list(schema, items):
@@ -21,24 +21,26 @@ def get_serial_list(schema, items):
     
     
 def update_serial_recursive(schema, item, data):
-    for key in data.keys():    
+    for key in data.keys():
         if is_object(schema[key]):
             update_serial_recursive(schema[key]['schema'], item[key], data[key])
         elif is_list_of_objects(schema[key]):
             for i in range(len(data[key])):
                 update_serial_recursive(schema[key]['schema']['schema'], item[key][i], data[key][i])   
-            
-    for key in data.keys():
-        if schema[key]['type'] == 'datetime':
+        elif is_list_of_references(schema[key]):
+            data[key] = [_update_single_reference(x) for x in item[key]]
+        elif schema[key]['type'] == 'datetime':
             data[key] = data[key].isoformat()
-        if schema[key]['type'] == 'reference':
-            if hasattr(item[key], '__schema'):
-                data[key] = get_serial_dict(item[key].__schema, item[key])
-            else:
-                data[key] = {'_err': 'reference not found'}
+        elif schema[key]['type'] == 'reference':
+            data[key] = _update_single_reference(item[key])
                 
-
     for key in schema.keys():
         if 'serialize' in schema[key]:
             data[key] = schema[key]['serialize'](item)
 
+
+def _update_single_reference(item):
+    if hasattr(item, '__schema'):
+        return get_serial_dict(item.__schema, item)
+    else:
+        return {'_err': 'reference not found'}

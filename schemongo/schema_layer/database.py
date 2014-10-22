@@ -4,7 +4,7 @@ from ..db_layer import database
 from ..db_layer.collection import CursorWrapper
 from ..db_layer.db_doc import DBDoc
 from schema_doc import enforce_datatypes, merge, run_auto_funcs, generate_prototype, fill_in_prototypes, \
-                       enforce_schema_behaviors, is_object, is_list_of_objects
+                       enforce_schema_behaviors, is_object, is_list_of_objects, is_list_of_references
 from serialization import serialize, serialize_list, get_serial_dict, get_serial_list
 
 from pprint import pprint as p
@@ -190,7 +190,17 @@ def expand_references(db, schema, data):
             expand_references(db, schema[key]['schema'], data[key])
         elif is_list_of_objects(schema[key]):
             [expand_references(db, schema[key]['schema']['schema'], x) for x in data[key]]
+        elif is_list_of_references(schema[key]):
+            data[key] = [_expand_single_reference(db, schema[key]['schema'], x) for x in data[key]]
         elif schema[key]['type'] == 'reference':
-            data[key] = db[schema[key]['collection']].find_one({'_id':data[key]}, fields=schema[key].get('fields', None))
-            if data[key]:
-                data[key].__schema = db.schemas[schema[key]['collection']]
+            data[key] = _expand_single_reference(db, schema[key], data[key])
+            #data[key] = db[schema[key]['collection']].find_one({'_id':data[key]}, fields=schema[key].get('fields', None))
+            #if data[key]:
+            #    data[key].__schema = db.schemas[schema[key]['collection']]
+                
+                
+def _expand_single_reference(db, schema, _id):
+    result = db[schema['collection']].find_one({'_id':_id}, fields=schema.get('fields', None))
+    if result:
+        result.__schema = db.schemas[schema['collection']]
+    return result

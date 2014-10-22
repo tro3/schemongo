@@ -648,6 +648,49 @@ class SchemaLayerTests(TestCase):
         })
 
 
+    def test_serialized_reference_list(self):
+        self.db.register_schema('users', {
+            "first_name": {"type": "string"},
+            "last_name": {"type": "string"},
+            "full_name": {'type': 'string', 'serialize': lambda e: '%s %s' % (e.first_name, e.last_name)}
+        })
+        self.db.register_schema('test', {
+            "name": {"type": "string"},
+            "contacts": {"type": "list", "schema": {
+                'type': 'reference',
+                'collection': 'users',
+                'fields': ['full_name'],
+            }}
+        })
+
+        ids, errs = self.db.users.insert([
+            {'first_name':'Bob', 'last_name': 'Paris'},
+            {'first_name':'Fred', 'last_name': 'Caen'},
+        ])
+        self.assertIsNone(errs)
+        
+        data = {
+            'name': 'Samsung',
+            'contacts': [{
+                '_id': 1,
+                'full_name': 'Bob Paris'
+            }]
+        }
+        ids, errs = self.db.test.insert(data)
+        self.assertIsNone(errs)
+
+        inst = self.db.test.find_one({'_id':1})
+        data = json.loads(self.db.test.serialize(inst))
+        self.assertEqual(data, {
+            '_id': 1,
+            'name': 'Samsung',
+            'contacts': [{
+                '_id': 1,
+                'full_name': 'Bob Paris'
+            }]
+        })
+
+
     def test_serialized_projection(self):
         self.db.register_schema('test', {
             "first_name": {"type": "string"},
