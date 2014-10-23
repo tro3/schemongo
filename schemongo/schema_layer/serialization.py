@@ -42,6 +42,8 @@ def update_serial_recursive(schema, item, data):
 
 
 def _update_single_reference(item):
+    if item is None:
+        return None
     if hasattr(item, '__schema'):
         return get_serial_dict(item.__schema, item)
     else:

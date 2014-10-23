@@ -14,18 +14,78 @@ class SchemaDatabaseWrapper(database.DatabaseWrapper):
     def __init__(self, *args, **kwords):
         super(SchemaDatabaseWrapper, self).__init__(*args, **kwords)
         self.schemas = {}
+        self.references = {}
         
     def register_schema(self, key, schema):
-        self._add_id_recursive(schema)
+        self._prep_schema(schema, key)
         self.schemas[key] = schema
         
-    def _add_id_recursive(self, schema):
+    def _prep_schema(self, schema, coll_name):
         schema.update({'_id':{'type':'integer'}})
         for key, val in schema.items():
             if is_object(val):
-                self._add_id_recursive(schema[key]['schema'])
+                self._prep_schema(schema[key]['schema'], coll_name)
             elif is_list_of_objects(val):
-                self._add_id_recursive(schema[key]['schema']['schema'])
+                self._prep_schema(schema[key]['schema']['schema'], coll_name)
+            elif is_list_of_references(val):
+                remote = val['schema']['collection']
+                self.references[remote] = self.references.get(remote, [])
+                self.references[remote].append(coll_name)
+            elif val['type'] == 'reference':
+                remote = val['collection']
+                self.references[remote] = self.references.get(remote, [])
+                self.references[remote].append(coll_name)
+                
+    def check_singular_references(self, coll_name, id):
+        for coll in self.references.get(coll_name,[]):
+            schema = self.schemas[coll]
+            err_list = []
+            for item in self[coll].find():
+                errs = self._check_singular_references_recursive(item, schema, coll_name, id)
+                if errs:
+                    err_list.append("Collection '%s', item %s: undeleteable reference encountered" % (coll, item['_id']))
+            if err_list:
+                return err_list
+    
+    def _check_singular_references_recursive(self, item, schema, coll_name, id):
+        for key, val in schema.items():
+            if is_object(val):
+                errs = self._check_singular_references_recursive(item[key], schema[key]['schema'], coll_name, id)
+                if errs:
+                    return errs                
+            elif is_list_of_objects(val):
+                for x in item[key]:
+                    errs = self._check_singular_references_recursive(x, schema[key]['schema']['schema'], coll_name, id)             
+                    if errs:
+                        return errs
+            elif val['type'] == 'reference' and 'required' in val and val['required']:
+                if item[key]['_id'] == id:
+                    return True
+
+    def remove_references(self, coll_name, id):
+        for coll in self.references.get(coll_name,[]):
+            schema = self.schemas[coll]
+            for item in self[coll].find():
+                if self._remove_references_recursive(item, schema, coll_name, id):
+                    self[coll].update(item)
+
+    def _remove_references_recursive(self, item, schema, coll_name, id):
+        result = False
+        for key, val in schema.items():
+            if is_object(val):
+                result = result or self._remove_references_recursive(item[key], schema[key]['schema'], coll_name, id)
+            elif is_list_of_objects(val):
+                for x in item[key]:
+                    result = result or self._remove_references_recursive(x, schema[key]['schema']['schema'], coll_name, id)             
+            elif is_list_of_references(val):
+                if id in [x['_id'] for x in item[key]]:
+                    item[key] = [x for x in item[key] if x['_id'] != id]
+                    result = True
+            elif val['type'] == 'reference' and item[key]['_id'] == id:
+                item[key] = None
+                result = True
+        return result
+                
     
     def __getattr__(self, key):
         return self[key]
@@ -139,6 +199,19 @@ class SchemaCollectionWrapper(object):
 
 
     def remove(self, spec_or_id, username=None):
+        if isinstance(spec_or_id, dict):
+            data = self.coll.find(spec_or_id)
+        else:
+            data = self.coll.find({'_id': spec_or_id})
+        data = [x for x in data]
+        
+        for item in data:
+            errs = self.db.check_singular_references(self.coll._collection.name, item._id)
+            if errs:
+                return errs
+
+        self.db.remove_references(self.coll._collection.name, item._id)
+        
         self.coll.remove(spec_or_id, username)
 
 
@@ -191,16 +264,15 @@ def expand_references(db, schema, data):
         elif is_list_of_objects(schema[key]):
             [expand_references(db, schema[key]['schema']['schema'], x) for x in data[key]]
         elif is_list_of_references(schema[key]):
-            data[key] = [_expand_single_reference(db, schema[key]['schema'], x) for x in data[key]]
+            data[key] = [_expand_single_reference(db, schema[key]['schema'], x) for x in data[key] if data[key]]
         elif schema[key]['type'] == 'reference':
-            data[key] = _expand_single_reference(db, schema[key], data[key])
-            #data[key] = db[schema[key]['collection']].find_one({'_id':data[key]}, fields=schema[key].get('fields', None))
-            #if data[key]:
-            #    data[key].__schema = db.schemas[schema[key]['collection']]
+            data[key] = data[key] and _expand_single_reference(db, schema[key], data[key])
                 
                 
 def _expand_single_reference(db, schema, _id):
     result = db[schema['collection']].find_one({'_id':_id}, fields=schema.get('fields', None))
     if result:
         result.__schema = db.schemas[schema['collection']]
-    return result
+        return result
+    else:
+        return 'reference not found'

@@ -691,6 +691,124 @@ class SchemaLayerTests(TestCase):
         })
 
 
+    def test_delete_singular_reference(self):
+        self.db.register_schema('users', {
+            "first_name": {"type": "string"},
+            "last_name": {"type": "string"},
+            "full_name": {'type': 'string', 'serialize': lambda e: '%s %s' % (e.first_name, e.last_name)}
+        })
+        self.db.register_schema('test', {
+            "name": {"type": "string"},
+            "contact": {
+                'type': 'reference',
+                'collection': 'users',
+                'fields': ['full_name'],
+            }
+        })
+
+        ids, errs = self.db.users.insert([
+            {'first_name':'Bob', 'last_name': 'Paris'},
+            {'first_name':'Fred', 'last_name': 'Caen'},
+        ])
+        self.assertIsNone(errs)
+        
+        data = {
+            'name': 'Samsung',
+            'contact': {'_id': 1}
+        }
+        ids, errs = self.db.test.insert(data)
+        self.assertIsNone(errs)
+
+        errs = self.db.users.remove({'_id': 1})
+        self.assertIsNone(errs)
+
+        inst = self.db.test.find_one({'_id':1})
+        data = json.loads(self.db.test.serialize(inst))
+        self.assertEqual(data, {
+            '_id': 1,
+            'name': 'Samsung',
+            'contact': None
+        })
+
+
+    def test_delete_required_singular_reference(self):
+        self.db.register_schema('users', {
+            "first_name": {"type": "string"},
+            "last_name": {"type": "string"},
+            "full_name": {'type': 'string', 'serialize': lambda e: '%s %s' % (e.first_name, e.last_name)}
+        })
+        self.db.register_schema('test', {
+            "name": {"type": "string"},
+            "contact": {
+                'type': 'reference',
+                'collection': 'users',
+                'fields': ['full_name'],
+                'required': True,
+            }
+        })
+
+        ids, errs = self.db.users.insert([
+            {'first_name':'Bob', 'last_name': 'Paris'},
+            {'first_name':'Fred', 'last_name': 'Caen'},
+        ])
+        self.assertIsNone(errs)
+        
+        data = {
+            'name': 'Samsung',
+            'contact': {'_id': 1}
+        }
+        ids, errs = self.db.test.insert(data)
+        self.assertIsNone(errs)
+
+        errs = self.db.users.remove({'_id': 1})
+        self.assertIsNotNone(errs)
+
+        self.assertEqual(errs, ["Collection 'test', item 1: undeleteable reference encountered"])
+
+
+    def test_delete_reference_in_list(self):
+        self.db.register_schema('users', {
+            "first_name": {"type": "string"},
+            "last_name": {"type": "string"},
+            "full_name": {'type': 'string', 'serialize': lambda e: '%s %s' % (e.first_name, e.last_name)}
+        })
+        self.db.register_schema('test', {
+            "name": {"type": "string"},
+            "contacts": {"type": "list", "schema": {
+                'type': 'reference',
+                'collection': 'users',
+                'fields': ['full_name'],
+            }}
+        })
+
+        ids, errs = self.db.users.insert([
+            {'first_name':'Bob', 'last_name': 'Paris'},
+            {'first_name':'Fred', 'last_name': 'Caen'},
+        ])
+        self.assertIsNone(errs)
+        
+        data = {
+            'name': 'Samsung',
+            'contacts': [{'_id': 1},{'_id': 2}]
+        }
+        ids, errs = self.db.test.insert(data)
+        self.assertIsNone(errs)
+
+        errs = self.db.users.remove({'_id': 1})
+        self.assertIsNone(errs)
+
+        inst = self.db.test.find_one({'_id':1})
+        data = json.loads(self.db.test.serialize(inst))
+        self.assertEqual(data, {
+            '_id': 1,
+            'name': 'Samsung',
+            'contacts': [{
+                '_id': 2,
+                'full_name': 'Fred Caen'
+            }]
+        })
+
+
     def test_serialized_projection(self):
         self.db.register_schema('test', {
             "first_name": {"type": "string"},
