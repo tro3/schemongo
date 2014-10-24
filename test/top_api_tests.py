@@ -184,3 +184,23 @@ class TopAPITests(TestCase):
             '_id': 1,
             'first_name': 'bob',
         })
+        
+        
+    def test_find_nonexistent(self):
+        self.db.register_schema('users', {
+            "first_name": {"type": "string"},
+            "last_name": {"type": "string"},
+            "full_name": {"type": "string",
+                "serialize": lambda e: "%s %s" % (e.first_name, e.last_name)
+            }
+        })
+
+        ids, errs = self.db.users.insert([
+            {'first_name': 'Rick', 'last_name': 'James'},
+            {'first_name': 'Michael', 'last_name': 'Jackson'},
+            {'first_name': 'Elvis', 'last_name': 'Presley'},
+        ])
+        self.assertIsNone(errs)
+
+        inst = self.db.users.find_one({'last_name':'Jackson2'})
+        self.assertIsNone(inst)
