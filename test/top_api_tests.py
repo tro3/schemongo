@@ -204,3 +204,41 @@ class TopAPITests(TestCase):
 
         inst = self.db.users.find_one({'last_name':'Jackson2'})
         self.assertIsNone(inst)
+
+
+    def test_nonaligned_serialization(self):
+        self.db.register_schema('users', {
+            "first_name": {"type": "string"},
+            "last_name": {"type": "string"},
+            "contacts": {"type": "list", "schema": {"type": "dict", "schema": {
+                "name": {"type": "string"},
+                "ident": {"type": "string",
+                    "serialize": lambda e: "%s/%s" % (e.get_root().last_name, e.name)
+                }
+            }}}
+        })
+
+        ids, errs = self.db.users.insert({
+            'first_name': 'Rick',
+            'last_name': 'James',
+            'contacts': [
+                {'name': 'Jake Johanson'},
+                {'name': 'Bob Bobberton'},
+                {'name': 'Fred Farthington'},                
+            ]
+        })
+        self.assertIsNone(errs)
+
+        inst = self.db.users.find_one({'last_name':'James'}, {'contacts': 1})
+        inst._projection['contacts'].pop(1)
+        data = self.db.users.serialize(inst)
+        data = json.loads(data)
+        self.assertEqual(data, {
+            '_id': 1,
+            'contacts': [
+                {'_id': 1, 'name': 'Jake Johanson', 'ident': 'James/Jake Johanson'},
+                {'_id': 3, 'name': 'Fred Farthington', 'ident': 'James/Fred Farthington'},                                
+            ]
+        })
+        
+    

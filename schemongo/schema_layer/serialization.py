@@ -19,6 +19,13 @@ def get_serial_dict(schema, item):
 def get_serial_list(schema, items):
     return [get_serial_dict(schema, x) for x in items]
     
+def get_by_id(list, id):
+    for item in list:
+        if isinstance(item, dict) and '_id' in item and item['_id'] == id:
+            return item
+    
+
+    
     
 def update_serial_recursive(schema, item, data):
     for key in data.keys():
@@ -27,8 +34,9 @@ def update_serial_recursive(schema, item, data):
         elif is_object(schema[key]):
             update_serial_recursive(schema[key]['schema'], item[key], data[key])
         elif is_list_of_objects(schema[key]):
-            for i in range(len(data[key])):
-                update_serial_recursive(schema[key]['schema']['schema'], item[key][i], data[key][i])   
+            for subitem in data[key]:
+                subdata = get_by_id(data[key], subitem['_id'])
+                update_serial_recursive(schema[key]['schema']['schema'], subitem, subdata)
         elif is_list_of_references(schema[key]):
             data[key] = [_update_single_reference(x) for x in item[key]]
         elif schema[key]['type'] == 'datetime':
