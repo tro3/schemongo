@@ -131,15 +131,14 @@ def enforce_schema_behaviors(schema, data, db_coll, path=''):
         elif is_list_of_objects(schema[key]):
             for i, item in enumerate(data[key]):
                 errs.extend(enforce_schema_behaviors(schema[key]['schema']['schema'], item, db_coll, path + '%s/%s' % (key, i)))
+        elif schema[key]['type'] == 'list' and 'schema' in schema[key] and 'allowed' in schema[key]['schema']:
+            for i, item in enumerate(data[key]):
+                if not check_allowed(schema[key]['schema']['allowed'], data[key][i], data[key]):
+                    errs.append('%s%s/%s: %s' % (path, key, i, "'%s' not one of the allowed values" % data[key][i]))                
         else:
             if 'allowed' in schema[key]:
-                allowed = schema[key]['allowed']
-                if callable(allowed):
-                    allowed = allowed(data)
-                if not hasattr(allowed, '__iter__'):
-                    errs.append('%s%s: %s' % (path, key, "'required' parameter '%s' did not evaluate to an iterable" % allowed))
-                elif data[key] not in allowed:
-                    errs.append('%s%s: %s' % (path, key, "'%s' not one of allowed values" % data[key]))
+                if not check_allowed(schema[key]['allowed'], data, data[key]):
+                    errs.append('%s%s: %s' % (path, key, "'%s' not one of the allowed values" % data[key]))
             if 'required' in schema[key] and schema[key]['required']:
                 if key not in data or data[key] is None:
                     errs.append('%s%s: %s' % (path, key, "value is required"))
@@ -148,6 +147,18 @@ def enforce_schema_behaviors(schema, data, db_coll, path=''):
                     errs.append('%s%s: %s' % (path, key, "'%s' is not unique" % data[key]))
                         
     return errs
+
+
+def check_allowed(allowed, elem, data):
+    if callable(allowed):
+        allowed = allowed(elem)
+    if not hasattr(allowed, '__iter__'):
+        raise "'required' parameter '%s' did not evaluate to an iterable" % allowed
+    if data not in allowed:
+        return False
+    return True
+
+
 
 
 def generate_prototype(schema, parent=None):

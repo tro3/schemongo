@@ -252,7 +252,7 @@ class SchemaLayerTests(TestCase):
             "data2": 8
         }
         ids, errs = self.db.test.insert(data)
-        self.assertEqual(errs, ["name: 'Bob' not one of allowed values", "data2: '8' not one of allowed values"])
+        self.assertEqual(errs, ["name: 'Bob' not one of the allowed values", "data2: '8' not one of the allowed values"])
 
         data = {
             "name": "Fred",
@@ -269,7 +269,7 @@ class SchemaLayerTests(TestCase):
             "data2": 3
         }
         errs = self.db.test.update(data)
-        self.assertEqual(errs, ["name: 'Bob' not one of allowed values"])
+        self.assertEqual(errs, ["name: 'Bob' not one of the allowed values"])
 
 
     def test_required(self):
@@ -1049,3 +1049,22 @@ class SchemaLayerTests(TestCase):
         self.assertIsNone(errs)
 
         self.assertIsNone(self.db.test.find_one({'_id':2}))
+
+
+    def test_allowed_string_list(self):
+        self.db.register_schema('test', {
+            "name": {"type": "string"},
+            "tags": {"type": "list", "schema": {
+                "type": "string",
+                "allowed": ["top", 'middle', 'bottom'],
+            }}
+        })
+
+        data = {
+            "name": "Bob",
+            'tags': ['lalala']
+        }
+        ids, errs = self.db.test.insert(data)
+        self.assertIsNotNone(errs)
+
+        self.assertEqual(errs, ["tags/0: 'lalala' not one of the allowed values"])
