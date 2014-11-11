@@ -34,8 +34,8 @@ def update_serial_recursive(schema, item, data):
         elif is_object(schema[key]):
             update_serial_recursive(schema[key]['schema'], item[key], data[key])
         elif is_list_of_objects(schema[key]):
-            for subitem in data[key]:
-                subdata = get_by_id(data[key], subitem['_id'])
+            for subdata in data[key]:
+                subitem = get_by_id(item[key], subdata['_id'])
                 update_serial_recursive(schema[key]['schema']['schema'], subitem, subdata)
         elif is_list_of_references(schema[key]):
             data[key] = [_update_single_reference(x) for x in item[key]]
