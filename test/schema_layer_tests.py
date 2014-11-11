@@ -1030,3 +1030,22 @@ class SchemaLayerTests(TestCase):
             "name": "Bob",
             "author": None,
         })
+
+
+    def test_find_one_null_with_reference(self):
+        self.db.register_schema('users', {
+            "name": {"type": "string", 'required': True, 'unique': True},
+        })        
+        
+        self.db.register_schema('test', {
+            "name": {"type": "string", 'required': True, 'unique': True},
+            "author": {"type": "reference", "collection": "users", "fields":["name"]},
+        })
+
+        data = {
+            "name": "Bob"
+        }
+        ids, errs = self.db.test.insert(data)
+        self.assertIsNone(errs)
+
+        self.assertIsNone(self.db.test.find_one({'_id':2}))

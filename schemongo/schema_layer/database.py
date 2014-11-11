@@ -106,6 +106,8 @@ class SchemaCollectionWrapper(object):
 
     def find_one(self, spec_or_id, fields=None, skip=0, sort=None):
         tmp = self.coll.find_one(spec_or_id, fields, skip, sort)
+        if not tmp:
+            return
         expand_references(self.db, self.schema, tmp)
         return tmp
     
