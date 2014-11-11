@@ -1037,10 +1037,10 @@ class SchemaLayerTests(TestCase):
         
         self.db.register_schema('test', {
             "name": {"type": "string", 'required': True, 'unique': True},
-            "author": {"type": "reference", "collection": "users", "fields":["name"], "auto": lambda e: bob},
+            "author": {"type": "reference", "collection": "users", "fields":["name"], "auto_init": lambda e: bob},
             "comments": {"type": "list", "schema": {"type": "dict", "schema": {
                 "text": {"type": "string"},
-                "creator": {"type": "reference", "collection": "users", "fields":["name"], "auto": lambda e: bob},
+                "creator": {"type": "reference", "collection": "users", "fields":["name"], "auto_init": lambda e: bob},
                 "creatorId": {"type": "integer", "serialize": lambda e: e.creator._id},
             }}}
         })
@@ -1081,7 +1081,7 @@ class SchemaLayerTests(TestCase):
             "name": "My Thesis 2",
             "author": {"_id": 1},
             "comments": [
-                {"_id": 1, "text": "Yo 2", "creator": {"_id": 1}}
+                {"_id": 1, "text": "Yo 2"}
             ]
         }
         errs = self.db.test.update(data)

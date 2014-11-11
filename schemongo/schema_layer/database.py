@@ -139,12 +139,12 @@ class SchemaCollectionWrapper(object):
     
     def process_update(self, incoming):
         assert '_id' in incoming, "Cannot update document without _id attribute"
-
+        
         errs = enforce_datatypes(self.schema, incoming)
         if errs:
             return (None, errs)
 
-        data = self.find_one({"_id":incoming["_id"]})
+        data = self.coll.find_one({"_id":incoming["_id"]})
         merge(data, incoming)
         fill_in_prototypes(self.schema, data)
         run_auto_funcs(self.schema, data)
@@ -157,7 +157,7 @@ class SchemaCollectionWrapper(object):
 
 
     def process_direct_update(self, incoming):
-        data = self.find_one({"_id":incoming["_id"]})
+        data = self.coll.find_one({"_id":incoming["_id"]})
         merge(data, incoming)
         fill_in_prototypes(self.schema, data)
         run_auto_funcs(self.schema, data)
