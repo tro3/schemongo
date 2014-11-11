@@ -921,3 +921,69 @@ class SchemaLayerTests(TestCase):
                 "really": 'George, really'
             }],
         })
+        
+
+
+    def test_update_with_embedded_reference(self):
+        self.db.register_schema('users', {
+            "name": {"type": "string", 'required': True, 'unique': True},
+        })        
+        
+        self.db.register_schema('test', {
+            "name": {"type": "string", 'required': True, 'unique': True},
+            "author": {"type": "reference", "collection": "users", "fields":["name"]},
+            "comments": {"type": "list", "schema": {"type": "dict", "schema": {
+                "text": {"type": "string"},
+                "creator": {"type": "reference", "collection": "users", "fields":["name"]},
+                "creatorId": {"type": "integer", "serialize": lambda e: e.creator._id},
+            }}}
+        })
+
+        data = {
+            "name": "Bob"
+        }
+        ids, errs = self.db.users.insert(data)
+        self.assertIsNone(errs)
+
+        data = {
+            "name": "My Thesis",
+            "author": {"_id":1},
+            "comments": [
+                {"text": "Yo", "creator": {"_id": 1}}
+            ]
+        }
+        ids, errs = self.db.test.insert(data)
+        self.assertIsNone(errs)
+
+        data = {
+            "_id": 1,
+            "name": "My Thesis 2",
+            "author": {"_id": 1},
+            "comments": [
+                {"_id": 1, "text": "Yo 2", "creator": {"_id": 1}}
+            ]
+        }
+        errs = self.db.test.update(data)
+        self.assertIsNone(errs)
+
+        data = json.loads(self.db.test.serialize(self.db.test.find_one({'_id':1})))
+        
+        self.assertEqual(data, {
+            "_id": 1,
+            "name": "My Thesis 2",
+            "author": {
+                "_id":1,
+                "name": "Bob",
+            },
+            "comments": [
+                {
+                    "_id": 1,
+                    "text": "Yo 2",
+                    "creatorId": 1,
+                    "creator": {
+                        "_id": 1,
+                        "name": "Bob",                       
+                    }
+                }
+            ],               
+        })
