@@ -212,7 +212,9 @@ def run_auto_funcs(schema, data):
             [run_auto_funcs(schema[key]['schema']['schema'], x) for x in data[key]]
         elif 'auto_init' in schema[key] and not data._id:
             data[key] = schema[key]['auto_init'](data)
+            data[key] = _convert_value(schema[key], data[key])
         elif 'auto' in schema[key]:
             data[key] = schema[key]['auto'](data)
+            data[key] = _convert_value(schema[key], data[key])
 
 
