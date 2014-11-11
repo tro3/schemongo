@@ -40,7 +40,7 @@ def update_serial_recursive(schema, item, data):
         elif is_list_of_references(schema[key]):
             data[key] = [_update_single_reference(x) for x in item[key]]
         elif schema[key]['type'] == 'datetime':
-            data[key] = data[key].isoformat()
+            data[key] = data[key] and data[key].isoformat()
         elif schema[key]['type'] == 'reference':
             data[key] = _update_single_reference(item[key])
                 

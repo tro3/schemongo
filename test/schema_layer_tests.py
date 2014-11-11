@@ -967,7 +967,6 @@ class SchemaLayerTests(TestCase):
         self.assertIsNone(errs)
 
         data = json.loads(self.db.test.serialize(self.db.test.find_one({'_id':1})))
-        
         self.assertEqual(data, {
             "_id": 1,
             "name": "My Thesis 2",
@@ -986,4 +985,48 @@ class SchemaLayerTests(TestCase):
                     }
                 }
             ],               
+        })
+
+
+    def test_null_date(self):
+        self.db.register_schema('test', {
+            "name": {"type": "string"},
+            "date": {"type": "datetime"},
+        })
+
+        data = {
+            "name": "Bob"
+        }
+        ids, errs = self.db.test.insert(data)
+        self.assertIsNone(errs)
+
+        data = json.loads(self.db.test.serialize(self.db.test.find_one({'_id':1})))
+        self.assertEqual(data, {
+            "_id": 1,
+            "name": "Bob",
+            "date": None,
+        })
+
+
+    def test_null_reference(self):
+        self.db.register_schema('users', {
+            "name": {"type": "string", 'required': True, 'unique': True},
+        })        
+        
+        self.db.register_schema('test', {
+            "name": {"type": "string", 'required': True, 'unique': True},
+            "author": {"type": "reference", "collection": "users", "fields":["name"]},
+        })
+
+        data = {
+            "name": "Bob"
+        }
+        ids, errs = self.db.test.insert(data)
+        self.assertIsNone(errs)
+
+        data = json.loads(self.db.test.serialize(self.db.test.find_one({'_id':1})))
+        self.assertEqual(data, {
+            "_id": 1,
+            "name": "Bob",
+            "author": None,
         })
