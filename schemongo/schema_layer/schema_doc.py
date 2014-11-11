@@ -133,7 +133,7 @@ def enforce_schema_behaviors(schema, data, db_coll, path=''):
                 errs.extend(enforce_schema_behaviors(schema[key]['schema']['schema'], item, db_coll, path + '%s/%s' % (key, i)))
         elif schema[key]['type'] == 'list' and 'schema' in schema[key] and 'allowed' in schema[key]['schema']:
             for i, item in enumerate(data[key]):
-                if not check_allowed(schema[key]['schema']['allowed'], data[key][i], data[key]):
+                if not check_allowed(schema[key]['schema']['allowed'], data, data[key][i]):
                     errs.append('%s%s/%s: %s' % (path, key, i, "'%s' not one of the allowed values" % data[key][i]))                
         else:
             if 'allowed' in schema[key]:

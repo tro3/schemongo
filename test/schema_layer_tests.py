@@ -272,6 +272,41 @@ class SchemaLayerTests(TestCase):
         self.assertEqual(errs, ["name: 'Bob' not one of the allowed values"])
 
 
+    def test_allowed_list(self):
+        self.db.register_schema('test', {
+            "name": {"type": "string", "allowed": ["Fred", "George"]},                
+            "data": {"type": "integer"},
+            "data2": {"type": 'list', 'schema': 
+                {"type": "integer", "allowed": lambda elem: [elem.data-1,elem.data,elem.data+1]},
+            }
+        })
+
+        data = {
+            "name": "Bob",
+            "data": 4,
+            "data2": [8]
+        }
+        ids, errs = self.db.test.insert(data)
+        self.assertEqual(errs, ["name: 'Bob' not one of the allowed values", "data2/0: '8' not one of the allowed values"])
+
+        data = {
+            "name": "Fred",
+            "data": 4,
+            "data2": [5]
+        }
+        ids, errs = self.db.test.insert(data)
+        self.assertIsNone(errs)
+
+        data = {
+            "_id": 1,
+            "name": "Fred",
+            "data": 4,
+            "data2": [3,8]
+        }
+        errs = self.db.test.update(data)
+        self.assertEqual(errs, ["data2/1: '8' not one of the allowed values"])
+
+
     def test_required(self):
         self.db.register_schema('test', {
             "name": {"type": "string"},                
