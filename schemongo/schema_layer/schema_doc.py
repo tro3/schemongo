@@ -182,8 +182,10 @@ def fill_in_prototypes(schema, doc):
             doc[key] = _generate_prototype_field(schema[key], doc)
 
         if is_object(schema[key]):
+            doc[key] = doc[key] or {}
             fill_in_prototypes(schema[key]['schema'], doc[key])
         elif is_list_of_objects(schema[key]):
+            doc[key] = doc[key] or []
             [fill_in_prototypes(schema[key]['schema']['schema'], item) for item in doc[key]]
             
     for key in doc.keys():

@@ -262,13 +262,25 @@ class SchemaCursorWrapper(CursorWrapper):
 def expand_references(db, schema, data):
     for key in schema.keys():
         if is_object(schema[key]):
-            expand_references(db, schema[key]['schema'], data[key])
+            if key in data:
+                expand_references(db, schema[key]['schema'], data[key])
+            else:
+                data[key] = None
         elif is_list_of_objects(schema[key]):
-            [expand_references(db, schema[key]['schema']['schema'], x) for x in data[key]]
+            if key in data:
+                [expand_references(db, schema[key]['schema']['schema'], x) for x in data[key]]
+            else:
+                data[key] = []
         elif is_list_of_references(schema[key]):
-            data[key] = [_expand_single_reference(db, schema[key]['schema'], x) for x in data[key] if data[key]]
+            if key in data:
+                data[key] = [_expand_single_reference(db, schema[key]['schema'], x) for x in data[key] if data[key]]
+            else:
+                data[key] = []
         elif schema[key]['type'] == 'reference':
-            data[key] = data[key] and _expand_single_reference(db, schema[key], data[key])
+            if key in data:
+                data[key] = data[key] and _expand_single_reference(db, schema[key], data[key])
+            else:
+                data[key] = None
                 
                 
 def _expand_single_reference(db, schema, _id):

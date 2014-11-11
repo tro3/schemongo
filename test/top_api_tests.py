@@ -241,4 +241,144 @@ class TopAPITests(TestCase):
             ]
         })
         
-    
+
+
+    def test_schema_change_add_ref(self):
+        self.db.register_schema('users', {
+            "name": {"type": "string", 'required': True, 'unique': True},
+        })        
+
+        self.db.register_schema('test', {
+            "first_name": {"type": "string", 'default': 'bob'},
+        })
+
+        ids, errs = self.db.test.insert([
+            {'first_name': 'James'},
+        ], direct=True)
+        self.assertIsNone(errs)
+
+        self.db.register_schema('test', {
+            "first_name": {"type": "string", 'default': 'bob'},
+            "users": {
+                "type": "reference",
+                "collection": "users",
+                "fields": [
+                    "name"
+                ]
+            }
+        })
+
+        errs = self.db.test.update({'_id':1})
+        self.assertIsNone(errs)
+
+        data = json.loads(self.db.test.serialize(self.db.test.find_one({'_id':1})))
+        self.assertEqual(data, {
+            '_id': 1,
+            'first_name': 'James',
+            'users': None,
+        })
+
+
+    def test_schema_change_add_obj(self):
+        self.db.register_schema('users', {
+            "name": {"type": "string", 'required': True, 'unique': True},
+        })        
+
+        self.db.register_schema('test', {
+            "first_name": {"type": "string"},
+        })
+
+        ids, errs = self.db.test.insert([
+            {'first_name': 'James'},
+        ], direct=True)
+        self.assertIsNone(errs)
+
+        self.db.register_schema('test', {
+            "first_name": {"type": "string"},
+            "user": {"type": 'dict', 'schema': {
+                'username': {"type": "string"}
+            }}
+        })
+
+        errs = self.db.test.update({'_id':1})
+        self.assertIsNone(errs)
+
+        data = json.loads(self.db.test.serialize(self.db.test.find_one({'_id':1})))
+        self.assertEqual(data, {
+            '_id': 1,
+            'first_name': 'James',
+            'user': {
+                '_id': 1,
+                'username': None
+            },
+        })
+
+
+
+    def test_schema_change_add_reflist(self):
+        self.db.register_schema('users', {
+            "name": {"type": "string", 'required': True, 'unique': True},
+        })        
+
+        self.db.register_schema('test', {
+            "first_name": {"type": "string", 'default': 'bob'},
+        })
+
+        ids, errs = self.db.test.insert([
+            {'first_name': 'James'},
+        ], direct=True)
+        self.assertIsNone(errs)
+
+        self.db.register_schema('test', {
+            "first_name": {"type": "string", 'default': 'bob'},
+            "users": {"type": "list", "schema": {
+                "type": "reference",
+                "collection": "users",
+                "fields": [
+                    "name"
+                ]
+            }}
+        })
+
+        errs = self.db.test.update({'_id':1})
+        self.assertIsNone(errs)
+
+        data = json.loads(self.db.test.serialize(self.db.test.find_one({'_id':1})))
+        self.assertEqual(data, {
+            '_id': 1,
+            'first_name': 'James',
+            'users': [],
+        })
+
+
+    def test_schema_change_add_objlist(self):
+        self.db.register_schema('users', {
+            "name": {"type": "string", 'required': True, 'unique': True},
+        })        
+
+        self.db.register_schema('test', {
+            "first_name": {"type": "string", 'default': 'bob'},
+        })
+
+        ids, errs = self.db.test.insert([
+            {'first_name': 'James'},
+        ], direct=True)
+        self.assertIsNone(errs)
+
+        self.db.register_schema('test', {
+            "first_name": {"type": "string", 'default': 'bob'},
+            "users": {"type": "list", "schema": {'type': 'dict', 'schema': {
+                'username': {"type": "string"}
+            }}}
+        })
+
+        errs = self.db.test.update({'_id':1})
+        self.assertIsNone(errs)
+
+        data = json.loads(self.db.test.serialize(self.db.test.find_one({'_id':1})))
+        self.assertEqual(data, {
+            '_id': 1,
+            'first_name': 'James',
+            'users': [],
+        })
+
