@@ -382,3 +382,184 @@ class TopAPITests(TestCase):
             'users': [],
         })
 
+
+
+    def test_schema_change_major(self):
+        self.db.register_schema('users', {
+            "name": {"type": "string", 'required': True, 'unique': True},
+        })        
+
+        ids, errs = self.db.users.insert({'name': 'James'})
+        self.assertIsNone(errs)
+
+
+        self.db.register_schema('test', {
+            "name": {"type": "string"},
+            "data": {"type": "integer", "required": True},
+            "cap_name": {"type": "string",
+                "serialize": lambda e: e.name.upper()
+            },
+            "subdoc": {"type": "dict", "schema": {
+                "data": {"type":"integer"},
+                "subdoc": {"type": "dict", "schema": {
+                    "data": {"type":"integer"},
+                }},
+                "doclist": {"type": "list", "schema": {"type": "dict", "schema": {
+                    "name": {"type":"string"}
+                }}},            
+                "ref": {
+                    'type': 'reference',
+                    'collection': 'users',
+                    'fields': ['name'],
+                }, 
+                "reflist": {"type": "list", "schema": {
+                    'type': 'reference',
+                    'collection': 'users',
+                    'fields': ['name'],
+                }},            
+            }},
+            "list": {"type": "list"},
+            "hash": {"type": "dict"},
+            "num_list": {"type": "list", "schema": {"type": "integer"}},
+            "doclist": {"type": "list", "schema": {"type": "dict", "schema": {
+                "data": {"type":"integer"},
+                "subdoc": {"type": "dict", "schema": {
+                    "data": {"type":"integer"},
+                }},
+                "doclist": {"type": "list", "schema": {"type": "dict", "schema": {
+                    "name": {"type":"string"}
+                }}},            
+                "ref": {
+                    'type': 'reference',
+                    'collection': 'users',
+                    'fields': ['name'],
+                }, 
+                "reflist": {"type": "list", "schema": {
+                    'type': 'reference',
+                    'collection': 'users',
+                    'fields': ['name'],
+                }},            
+            }}},
+            "ref": {
+                'type': 'reference',
+                'collection': 'users',
+                'fields': ['name'],
+            }, 
+            "reflist": {"type": "list", "schema": {
+                'type': 'reference',
+                'collection': 'users',
+                'fields': ['name'],
+            }},            
+        })
+
+        data = {
+            "name": 'fred',
+            "data": 1,
+            "subdoc": {
+                "data": 1,
+                "subdoc": {"data": 56},
+                "doclist": [{"name": 'bob'}],            
+                "ref": {'_id':1},
+                "reflist": [{'_id':1}],    
+            },
+            "list": [4,'fgh'],
+            "hash": {3:'bob', '4':45},
+            "num_list": [5,4,3],
+            "doclist": [{
+                "data": 1,
+                "subdoc": {"data": 56},
+                "doclist": [{"name": 'bob'}],            
+                "ref": {'_id':1},
+                "reflist": [{'_id':1}],    
+            }],
+            "ref": {'_id':1},
+            "reflist": [{'_id':1}],    
+        }
+
+        ids, errs = self.db.test.insert(data)
+        self.assertIsNone(errs)
+
+
+        self.db.register_schema('test', {
+            "name2": {"type": "string"},
+            "data2": {"type": "integer", "required": True, 'default':1},
+            "cap_name2": {"type": "string",
+                "serialize": lambda e: e.name2 and e.name2.upper()
+            },
+            "subdoc2": {"type": "dict", "schema": {
+                "data": {"type":"integer"},
+                "subdoc": {"type": "dict", "schema": {
+                    "data": {"type":"integer"},
+                }},
+                "doclist": {"type": "list", "schema": {"type": "dict", "schema": {
+                    "name": {"type":"string"}
+                }}},            
+                "ref": {
+                    'type': 'reference',
+                    'collection': 'users',
+                    'fields': ['name'],
+                }, 
+                "reflist": {"type": "list", "schema": {
+                    'type': 'reference',
+                    'collection': 'users',
+                    'fields': ['name'],
+                }},            
+            }},
+            "list2": {"type": "list"},
+            "hash2": {"type": "dict"},
+            "num_list2": {"type": "list", "schema": {"type": "integer"}},
+            "doclist2": {"type": "list", "schema": {"type": "dict", "schema": {
+                "data": {"type":"integer"},
+                "subdoc": {"type": "dict", "schema": {
+                    "data": {"type":"integer"},
+                }},
+                "doclist": {"type": "list", "schema": {"type": "dict", "schema": {
+                    "name": {"type":"string"}
+                }}},            
+                "ref": {
+                    'type': 'reference',
+                    'collection': 'users',
+                    'fields': ['name'],
+                }, 
+                "reflist": {"type": "list", "schema": {
+                    'type': 'reference',
+                    'collection': 'users',
+                    'fields': ['name'],
+                }},            
+            }}},
+            "ref2": {
+                'type': 'reference',
+                'collection': 'users',
+                'fields': ['name'],
+            }, 
+            "reflist2": {"type": "list", "schema": {
+                'type': 'reference',
+                'collection': 'users',
+                'fields': ['name'],
+            }},            
+        })
+
+        errs = self.db.test.update({'_id':1})
+        self.assertIsNone(errs)
+        resp = self.db.test.find_one_and_serialize(1)
+        resp = json.loads(resp)
+        self.assertEqual(resp, {
+            "_id": 1,
+            "name2": None,
+            "cap_name2": None,
+            "data2": 1,
+            "subdoc2": {
+                "_id": 1,
+                "data": None,
+                "subdoc": {"_id": 1, "data": None},
+                "doclist": [],            
+                "ref": None,
+                "reflist": [],    
+            },
+            "list2": [],
+            "hash2": {"_id":1},
+            "num_list2": [],
+            "doclist2": [],
+            "ref2": None,
+            "reflist2": [],    
+        })

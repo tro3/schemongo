@@ -197,7 +197,7 @@ class SchemaCollectionWrapper(object):
         if errs:
             return errs
             
-        self.coll.update(data, username, direct)
+        self.coll.update(data, username, direct=True)
 
 
     def remove(self, spec_or_id, username=None):
