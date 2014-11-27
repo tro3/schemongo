@@ -70,7 +70,7 @@ _converters = {
     'boolean': bool,
     'integer': int,
     'float': float,
-    'string': str,
+    'string': unicode,
     'dict': dict,
     'datetime': _convert_datetime,
     'reference': _convert_reference,

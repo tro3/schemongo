@@ -85,7 +85,7 @@ class DBDocTests(TestCase):
         }        
         enforce_datatypes(schema, data)
         
-        self.assertIsInstance(data['name'], str)
+        self.assertIsInstance(data['name'], unicode)
         self.assertFalse('name2' in data)
         self.assertFalse('key' in data)
         self.assertIsInstance(data['subdoc']['data'], int)
@@ -93,7 +93,7 @@ class DBDocTests(TestCase):
         self.assertIsInstance(data['hash']['data1'], int)
         self.assertIsInstance(data['num_list'], list)
         self.assertIsInstance(data['num_list'][0], int)
-        self.assertIsInstance(data['doclist'][0]['name'], str)
+        self.assertIsInstance(data['doclist'][0]['name'], unicode)
 
 
 
