@@ -2,6 +2,7 @@
 
 import datetime
 import dateutil.parser
+from dateutil.tz import tzlocal
 from ..db_layer.db_doc import DBDoc, DBDocList, enforce_ids, merge
 
 """
@@ -55,10 +56,14 @@ def is_read_only(val):
 
 def _convert_datetime(val):
     if isinstance(val, datetime.datetime):
-        return val
-    if type(val) in [str, unicode]:
-        return dateutil.parser.parse(val)
-    raise
+        pass
+    elif type(val) in [str, unicode]:
+        val = dateutil.parser.parse(val)
+    else:
+        raise
+    if val.tzinfo is None:
+        val = val.replace(tzinfo=tzlocal())
+    return val
 
 def _convert_reference(val):
     return val['_id']

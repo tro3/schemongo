@@ -6,7 +6,7 @@ from collection import CollectionWrapper
 
 class DatabaseWrapper(object):
     def __init__(self, client=None, dbname=None):
-        self._client = client or MongoClient()
+        self._client = client or MongoClient(tz_info=True)
         self._db = self._client[dbname or 'test']
         self.history = self._db._history
         

@@ -1,6 +1,7 @@
 import os
 from unittest import TestCase
 import datetime
+from dateutil.tz import tzlocal
 
 import mongomock
 from schemongo import schema_layer
@@ -455,18 +456,18 @@ class SchemaLayerTests(TestCase):
 
         data = {
             "name": "Fred",
-            "data": datetime.datetime(2011,04,05),
+            "data": datetime.datetime(2011,05,05),
         }
         ids, errs = self.db.test.insert(data)
         self.assertIsNone(errs)
         
-        self.assertEqual(self.db.test.find_one({'_id':1}).data, datetime.datetime(2011,04,05))
-        self.assertEqual(self.db.test.find_one({'_id':2}).data, datetime.datetime(2011,04,05))
+        self.assertEqual(self.db.test.find_one({'_id':1}).data, datetime.datetime(2011,04,05, tzinfo=tzlocal()))
+        self.assertEqual(self.db.test.find_one({'_id':2}).data, datetime.datetime(2011,05,05, tzinfo=tzlocal()))
 
         inst = self.db.test.find_one({'_id':2})
         text = self.db.test.serialize(inst)
         data = json.loads(text)
-        self.assertEqual(data['data'], '2011-04-05T00:00:00')
+        self.assertEqual(data['data'], '2011-05-05T00:00:00-07:00')
         
         data = {
             "name": "Bob",
@@ -542,7 +543,7 @@ class SchemaLayerTests(TestCase):
             'float': 2.34,
             'list': [2, 'a'],
             'hash': {'a': 2, '_id': 1},
-            'datetime': datetime.datetime(2011,1,1)
+            'datetime': datetime.datetime(2011,1,1, tzinfo=tzlocal())
         })
 
         data = json.loads(self.db.test.serialize(data))
@@ -554,7 +555,7 @@ class SchemaLayerTests(TestCase):
             'float': 2.34,
             'list': [2, 'a'],
             'hash': {'a': 2, '_id': 1},
-            'datetime': '2011-01-01T00:00:00',
+            'datetime': '2011-01-01T00:00:00-08:00',
         })
 
 
