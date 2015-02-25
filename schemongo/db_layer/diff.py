@@ -42,7 +42,7 @@ def diff_recursive(new, old, path=''):
             if key not in old:
                 changes.append({path+key: {'action': 'field added'}})
             else:
-                changes.extend(diff_recursive(val, old[key], key + '/'))
+                changes.extend(diff_recursive(val, old[key], path+key + '/'))
         elif isinstance(val, list):
             if key not in old:
                 changes.append({path+key: {'action': 'field added'}})
@@ -122,8 +122,36 @@ def diff_lists_recursive(new, old, path):
     
 
     
+if __name__ == '__main__':
+    old = {
+        'name': 'bob',
+        'staff': {
+            'eyes_only': {
+                'assessment': True
+            },
+        },
+        'great': {
+            'scott': {
+                'assessment': []
+            },
+        },
+    }
     
+    new = {
+        'name': 'bob',
+        'staff': {
+            'eyes_only': {
+                'assessment': False
+            },
+        },
+        'great': {
+            'scott': {
+                'assessment': [{'_id':1,'name':'bob'}]
+            },
+        },
+    }
     
+    print diff_recursive(new, old)
     
     
     
