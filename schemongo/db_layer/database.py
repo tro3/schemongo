@@ -1,5 +1,6 @@
 
 import datetime
+from dateutil.tz import tzlocal
 from pymongo import MongoClient
 from collection import CollectionWrapper
 
@@ -43,7 +44,7 @@ class DatabaseWrapper(object):
             {
                 'collection': collection,
                 'id':  id,
-                'time': datetime.datetime.now(),
+                'time': datetime.datetime.now().replace(tzinfo=tzlocal()),
                 'username': username,
                 'action': 'document created'
             }            
@@ -54,7 +55,7 @@ class DatabaseWrapper(object):
             {
                 'collection': collection,
                 'id':  id,
-                'time': datetime.datetime.now(),
+                'time': datetime.datetime.now().replace(tzinfo=tzlocal()),
                 'username': username,
                 'changes': diff
             }            
@@ -65,7 +66,7 @@ class DatabaseWrapper(object):
             {
                 'collection': collection,
                 'id':  id,
-                'time': datetime.datetime.now(),
+                'time': datetime.datetime.now().replace(tzinfo=tzlocal()),
                 'username': username,
                 'action': 'document removed',
                 'data': data                
